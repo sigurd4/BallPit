@@ -1,106 +1,31 @@
 using System;
 using UnityEngine;
-public abstract class Layer
+using System.Collections.Generic;
+public class Layer
 {
     public readonly int size;
+    public readonly Func<float, float> bounding;
     
-    public Layer(int size)
+    public Layer(int size) : this(size, Neurons.Lin) {}
+    public Layer(int size, Func<float, float> bounding)
     {
         if(size <= 0) throw new ArgumentOutOfRangeException("Invalid layer size: " + size);
         this.size = size;
+        this.bounding = bounding;
     }
 
-    public abstract float Bounding(float x);
-
-    public class Sigmoid : NonPopulatedLayer
+    public Neuron[] GenerateConnectedNeurons(Neuron[] neurons)
     {
-        public Sigmoid(int size) : base(size) {}
-
-        public override float Bounding(float x)
+        List<Neuron> result = new List<Neuron>();
+        for(int i = 0; i < size; i++)
         {
-            return Neurons.Sigmoid(x);
+            result.Add(new Neuron(neurons, this.bounding, 0));
         }
-
-        public override PopulatedLayer ConnectTo(PopulatedLayer layer)
-        {
-            return new NeuralLayer.Sigmoid(layer, this.size);
-        }
+        return result.ToArray();
     }
-    
-    public class Tanh : NonPopulatedLayer
+
+    public static LayerGroup operator *(Layer layer, int m)
     {
-        public Tanh(int size) : base(size) {}
-
-        public override float Bounding(float x)
-        {
-            return Neurons.Tanh(x);
-        }
-
-        public override PopulatedLayer ConnectTo(PopulatedLayer layer)
-        {
-            return new NeuralLayer.Tanh(layer, this.size);
-        }
-    }
-    public class Lin : NonPopulatedLayer
-    {
-        public Lin(int size) : base(size) {}
-
-        public override float Bounding(float x)
-        {
-            return Neurons.Lin(x);
-        }
-
-        public override PopulatedLayer ConnectTo(PopulatedLayer layer)
-        {
-            return new NeuralLayer.Lin(layer, this.size);
-        }
-    }
-    public class ReLU : NonPopulatedLayer
-    {
-        private readonly float bend;
-
-        public ReLU(int size, float bend = 0) : base(size)
-        {
-            this.bend = bend;
-        }
-
-        public override float Bounding(float x)
-        {
-            return Neurons.ReLU(x, this.bend);
-        }
-
-        public override PopulatedLayer ConnectTo(PopulatedLayer layer)
-        {
-            return new NeuralLayer.ReLU(layer, this.size, this.bend);
-        }
-    }
-    public class Input : PopulatedLayer
-    {
-        private static System.Random inputGen = new System.Random();
-        public readonly float[] input;
-
-        public Input(int size) : this(new float[size]) {}
-        public Input(float[] input) : base(input.Length)
-        {
-            this.input = input;
-
-            byte[] bytes = new byte[32*this.size];
-            Layer.Input.inputGen.NextBytes(bytes);
-            for(int i = 0; i < this.size; i++)
-            {
-                this.input[i] = Neurons.Modulus(BitConverter.ToSingle(bytes, 32*i));
-            }
-        }
-        
-        public override float Bounding(float x)
-        {
-            Neurons.Finite(x);
-            return Mathf.Min(1, Mathf.Max(-1, x));
-        }
-
-        public override float[] GetValues()
-        {
-            return Array.ConvertAll(this.input, this.Bounding);
-        }
+        return ((LayerGroup)layer)*m;
     }
 }

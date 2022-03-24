@@ -5,93 +5,49 @@ using System.Collections.Generic;
 
 public class Ball : MonoBehaviour
 {
-    private readonly LayerGroup<NonPopulatedLayer> hiddenLayers;
     public long age = 0;
     public long killCount = 0;
     public float fatigueCoefficient = 1;
     public float charge = 0;
     public readonly float density = 0.001f;
     public float[] voice = new float[0];
-    private readonly float[] inputLayer;
-    private readonly LayerGroup<PopulatedLayer> brainStructure;
-    public readonly Neurons neurons;
 
-    public readonly Behavioural[] behaviourals;
+    public Behavioural[] behaviourals;
     public new Rigidbody rigidbody;
     public MeshRenderer meshrenderer;
 
     // Start is called before the first frame update
-/*
-    public Ball()
+    public void Start()
     {
         BallPit.balls.Add(this);
         //this.scale /= BallPit.scale;
 
         this.behaviourals = new Behavioural[]{
-            new MemoryStack(this, 4, 8),
-            new SelfDigester(this),
-            new Vocalizer(this, 16, 0.1f),
-            new Accelerometer(this, 10f),
-            new AgeKnower(this, 0.0001f),
-            //new ChargeManipulator(this, 10000000000000000000f),
+            ////new MemoryStack(this, 4, 8),
+            ////new SelfDigester(this),
+            ////new Vocalizer(this, 16, 0.1f),
+            ////new Accelerometer(this, 10f),
+            ////new AgeKnower(this, 0.0001f),
+            ////new ChargeManipulator(this, 10000000000000000000f),
             new Colorizer(this),
-            new FatigueKnower(this, 16),
-            //new MassKnower(this, 1f),
-            new SelfSurgeon(this),
-            new SelfMutator(this, 16),
-            new TorqueEngine(this, 3600),
-            //new Wiggler(this, 1500f, 6),
-            //new Ears(this, 16, 100)
+            ////new FatigueKnower(this, 16),
+            ////new MassKnower(this, 1f),
+            ////new SelfSurgeon(this),
+            ////new SelfMutator(this, 16),
+            ////new TorqueEngine(this, 3600),
+            ////new Wiggler(this, 1500f, 6),
+            ////new Ears(this, 16, 100)
         };
-        
-        int isize = 0, osize = 0;
-        for(int i = 0, l = this.behaviourals.Length; i < l; i++)
-        {
-            isize += this.behaviourals[i].inputLayerNodes;
-            osize += this.behaviourals[i].outputLayerNodes;
-        }
-        isize = Math.Max(1, isize);
-        osize = Math.Max(1, osize);
 
-        this.inputLayer = new float[isize];
-        Layer.Lin outputLayer = new Layer.Lin(osize);
+        (int isize, int osize) = this.IOSize();
 
-        this.hiddenLayers = this.GenerateHiddenLayers(16);
+        LayerGroup brainStructure = new Layer(isize) + new Layer(2, Neurons.Sigmoid)*2 + new Layer(osize);
 
-        this.brainStructure = new Layer.Input(this.inputLayer) + (this.hiddenLayers + outputLayer);
-        this.neurons = new Neurons(this.brainStructure);
-    }
+        this.neurons = brainStructure.GenerateNeurons();
 
-    public LayerGroup<NonPopulatedLayer> GenerateHiddenLayers(int nodeCount)
-    {
-        List<NonPopulatedLayer> g = new List<NonPopulatedLayer>();
-        for(int n = 0; n < nodeCount;)
-        {
-            int size = BallPit.rand.Next((nodeCount - n)/2, nodeCount - n);
-            if(size > 0)
-            {
-                n += size;
-                switch(BallPit.rand.Next(0, 5))
-                {
-                    case 0: g.Add(new Layer.Lin(size)); break;
-                    case 4: g.Add(new Layer.ReLU(size, 0.1f)); break;
-                    case 2: g.Add(new Layer.Sigmoid(size)); break;
-                    case 3: g.Add(new Layer.Tanh(size)); break;
-                }
-            }
-        }
-        g.Sort((NonPopulatedLayer a, NonPopulatedLayer b) => {
-            return 1;
-        });
-        return g.ToArray();
-    }
-*/
-
-    public void Start()
-    {
         this.rigidbody = this.GetComponent<Rigidbody>();
         this.meshrenderer = this.GetComponent<MeshRenderer>();
-        //UpdateScale();
+        this.radius = this.transform.localScale[0];
     }
 
     // Update is called once per frame
@@ -102,7 +58,7 @@ public class Ball : MonoBehaviour
 
     public void FixedUpdate()
     {
-        /*if(this.transform.position.y < -10 || this.scale < 0.001f)
+        if(this.transform.position.y < -10)
         {
             this.Kill();
         }
@@ -111,21 +67,36 @@ public class Ball : MonoBehaviour
             this.UpdateNeurons();
 
             this.age++;
-        }*/
+        }
     }
+
+    #region behaviourals
+        private (int, int) IOSize()
+        {
+            int isize = 0, osize = 0;
+            for(int i = 0, l = this.behaviourals.Length; i < l; i++)
+            {
+                isize += this.behaviourals[i].inputLayerNodes;
+                osize += this.behaviourals[i].outputLayerNodes;
+            }
+            return (Math.Max(1, isize), Math.Max(1, osize));
+        }
+    #endregion
     
     #region neurons
+        public Neurons neurons;
         private void UpdateNeurons()
         {
             if(this.neurons == null) this.Kill();
-            float[] outputLayer = this.neurons.GetOutputLayerValues();
+
+            (int isize, int osize) = this.IOSize();
 
             int si = 0;
             int so = 0;
             for(int i = 0, l = this.behaviourals.Length; i < l; i++)
             {
                 Behavioural b = behaviourals[i];
-                b.UpdateNeurons(this.inputLayer, si, outputLayer, so);
+                b.UpdateNeurons(this.neurons, si, so - osize);
                 si += b.inputLayerNodes;
                 so += b.outputLayerNodes;
             }
@@ -179,73 +150,99 @@ public class Ball : MonoBehaviour
     #endregion
 
     #region geometry
-        public float _radius = 1f;
-        public float radius
-        {
-            get
+        #region world
+            public Vector3 position
             {
-                return this._radius;
-            }
-            set
-            {
-                if(value < 0.001f)
+                get
                 {
-                    this.Kill();
-                    return;
+                    return this.transform.position;
                 }
-                this._radius = value;
-                
-                //UPDATE UNITY GAMEOBJECT
-                this.transform.localScale = this.scale;
-                this.rigidbody.mass = this.mass;
+                set
+                {
+                    this.transform.position = value;
+                }
             }
-        }
-        public float diameter
-        {
-            get
+            public Vector3 velocity
             {
-                return 2.0f*this.radius;
+                get
+                {
+                    return this.rigidbody.velocity;
+                }
+                set
+                {
+                    this.rigidbody.velocity = value;
+                }
             }
-            set
+        #endregion
+        #region sphere
+            public float _radius = 1f;
+            public float radius
             {
-                this.radius = value/2.0f;
+                get
+                {
+                    return this._radius;
+                }
+                set
+                {
+                    if(value < 0.001f)
+                    {
+                        this.Kill();
+                        return;
+                    }
+                    this._radius = value;
+                    
+                    //UPDATE UNITY GAMEOBJECT
+                    this.transform.localScale = this.scale;
+                    this.rigidbody.mass = this.mass;
+                }
             }
-        }
-        public float circumference
-        {
-            get
+            public float diameter
             {
-                return Utils.radian*this.radius*this.radius;
+                get
+                {
+                    return 2.0f*this.radius;
+                }
+                set
+                {
+                    this.radius = value/2.0f;
+                }
             }
-            set
+            public float circumference
             {
-                this.radius = Mathf.Sqrt(value/Utils.radian);
+                get
+                {
+                    return Utils.radian*this.radius*this.radius;
+                }
+                set
+                {
+                    this.radius = Mathf.Sqrt(value/Utils.radian);
+                }
             }
-        }
-        public float volume
-        {
-            get
+            public float volume
             {
-                return Utils.spherePerCubeVolume*this.radius*this.radius*this.radius;
+                get
+                {
+                    return Utils.spherePerCubeVolume*this.radius*this.radius*this.radius;
+                }
+                set
+                {
+                    this.radius = Utils.Cbrt(value/Utils.spherePerCubeVolume);
+                }
             }
-            set
+            public float surfaceArea
             {
-                this.radius = Utils.Cbrt(value/Utils.spherePerCubeVolume);
+                get
+                {
+                    return Utils.spherePerQuadrantArea*this.radius*this.radius;
+                }
             }
-        }
-        public float surfaceArea
-        {
-            get
+            public Vector3 scale
             {
-                return Utils.spherePerQuadrantArea*this.radius*this.radius;
+                get
+                {
+                    return Vector3.one*(this.radius*BallPit.scale);
+                }
             }
-        }
-        public Vector3 scale
-        {
-            get
-            {
-                return Vector3.one*(this.radius*BallPit.scale);
-            }
-        }
+        #endregion
     #endregion
 }

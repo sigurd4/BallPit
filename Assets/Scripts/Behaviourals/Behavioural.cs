@@ -22,25 +22,20 @@ public class Behavioural
         
     }
 
-    public void UpdateNeurons(float[] inputLayer, int startIn, float[] outputLayer, int startOut)
+    public void UpdateNeurons(Neurons neurons, int startIn, int startOut)
     {
-        float[] subIn = new float[this.inputLayerNodes];
-        float[] subOut = new float[this.outputLayerNodes];
-        
-        if(startIn + this.inputLayerNodes > inputLayer.Length)
-        {
-            throw new ArgumentOutOfRangeException("Cannot reach item of index " + (startIn + this.inputLayerNodes) + " in array of length: " + inputLayer.Length);
-        }
-        if(startOut + this.outputLayerNodes > outputLayer.Length)
-        {
-            throw new ArgumentOutOfRangeException("Cannot reach item of index " + (startOut + this.outputLayerNodes) + " in array of length: " + outputLayer.Length);
-        }
-        Array.Copy(inputLayer, startIn, subIn, 0, this.inputLayerNodes);
-        Array.Copy(outputLayer, startOut, subOut, 0, this.outputLayerNodes);
+        Neuron[] input = neurons.Get(startIn, this.inputLayerNodes);
+        Neuron[] output = neurons.Get(startOut, this.outputLayerNodes);
 
-        this.UpdateNeurons(subIn, subOut);
-        
-        Array.Copy(subIn, 0, inputLayer, startIn, this.inputLayerNodes);
+        float[] inVal = Array.ConvertAll(input, (Neuron n) => n.value);
+        float[] outVal = Array.ConvertAll(input, (Neuron n) => n.value);
+
+        this.UpdateNeurons(inVal, outVal);
+
+        for(int i = 0; i < this.inputLayerNodes; i++)
+        {
+            input[i].value = inVal[i];
+        }
     }
     protected virtual void UpdateNeurons(float[] inputLayer, float[] outputLayer)
     {

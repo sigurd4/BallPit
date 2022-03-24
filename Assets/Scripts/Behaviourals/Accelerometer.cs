@@ -19,7 +19,7 @@ public class Accelerometer : Behavioural
         Vector3 sampleDir3 = new Vector3(Neurons.Lin(outputLayer[6]), Neurons.Lin(outputLayer[7]), Neurons.Lin(outputLayer[8]));
 
         Vector3 velocity = Quaternion.Inverse(this.ball.transform.rotation)*this.ball.GetComponent<Rigidbody>().velocity;
-        Vector3 acceleration = (velocity - this.lastVelocity)*this.scale;
+        Vector3 acceleration = (velocity - this.lastVelocity)/Time.deltaTime*this.scale;
         this.lastVelocity = velocity;
 
         inputLayer[0] = Neurons.Tanh(acceleration.x);
@@ -40,7 +40,7 @@ public class Accelerometer : Behavioural
         inputLayer[12] = Neurons.Tanh(Vector3.Dot(accelerationAngle, sampleDir3));
 
         Vector3 angularVelocity = this.ball.GetComponent<Rigidbody>().angularVelocity;
-        Vector3 angularAcceleration = (angularVelocity - this.lastAngularVelocity)*this.scale;
+        Vector3 angularAcceleration = (angularVelocity - this.lastAngularVelocity)/Time.deltaTime*this.scale;
         this.lastAngularVelocity = angularVelocity;
 
         inputLayer[13] = Neurons.Tanh(angularAcceleration.x);

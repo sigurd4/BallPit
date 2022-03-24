@@ -1,49 +1,36 @@
 using System;
-using System.Text;
-using UnityEngine;
+using System.Collections.Generic;
 public class Neuron
 {
-    public readonly PopulatedLayer prevLayer;
-    public readonly float[] coefficients;
+    public readonly Dictionary<Neuron, float> connections;
+    private readonly Func<float, float> bounding;
+    public float value;
 
-    public Neuron(PopulatedLayer prevLayer)
+    public Neuron(Neuron[] neurons, Func<float, float> bounding, float value = 0) : this(bounding, value)
     {
-        this.prevLayer = prevLayer;
-        this.coefficients = new float[this.prevLayer.size];
-
-        byte[] bytes = new byte[32*this.prevLayer.size];
-        //this.weigthGen.NextBytes(bytes);
-        for(int i = 0; i < this.prevLayer.size; i++)
+        for(int i = 0, l = neurons.Length; i < l; i++)
         {
-            this.coefficients[i] = Utils.GetRandomWeigthLin(BallPit.rand);
-            //this.coefficients[i] = Utils.GetRandomSign(this.weigthGen)*Neurons.Modulus(BitConverter.ToSingle(bytes, 32*i));
+            this.connections[neurons[i]] = Utils.GetRandomWeigthLin(BallPit.rand);
         }
     }
-    public Neuron(float[] coefficients)
+    public Neuron(Func<float, float> boundingfloat, float value = 0) : this(new Dictionary<Neuron, float>(), boundingfloat, value) {}
+    public Neuron(Dictionary<Neuron, float> connections, Func<float, float> bounding, float value = 0)
     {
-        this.coefficients = Array.ConvertAll(coefficients, this.BoundCoeff);
+        this.connections = connections;
+        this.value = value;
     }
 
-    private float BoundCoeff(float coefficient)
+    public void Update()
     {
-        return Mathf.Pow(Neurons.Tanh(coefficient), 10);
-    }
-
-    public float GetValue()
-    {
-        float[] array = this.prevLayer.GetValues();
-        float y = 0;
-        float ctot = 0;
-        for(int i = 0; i < this.prevLayer.size; i++)
+        if(this.connections.Count > 0)
         {
-            float c = this.coefficients[i];
-            y += c*array[i];
-            ctot += c;
+            float y = 0;
+            foreach(Neuron neuron in this.connections.Keys)
+            {
+                float c = this.connections[neuron];
+                y += c*neuron.value;
+            }
+            this.value = this.bounding(y);
         }
-        if(y != 0)
-        {
-            //y /= ctot;
-        }
-        return y;
     }
 }

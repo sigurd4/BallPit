@@ -2,69 +2,83 @@ using System.Linq;
 using System;
 using System.Collections.Generic;
 
-public class LayerGroup<T> where T : Layer
+public class LayerGroup
 {
-    private readonly int count;
-    private readonly T[] layers;
-    public LayerGroup(T layers, int count = 1) : this(new T[]{layers}, count) {}
-    public LayerGroup(T[] layers, int count = 1)
+    public readonly int count;
+    private readonly Layer[] layers;
+
+    public LayerGroup() : this(new Layer[0]) {}
+    public LayerGroup(Layer layer) : this(new Layer[]{layer}) {}
+    public LayerGroup(Layer[] layers)
     {
         this.layers = layers;
-        this.count = count;
+        this.count = layers.Length;
+    }
+    public Layer this[int i]
+    {
+        get
+        {
+            if(i < 0)
+            {
+                return this[this.count + i];
+            }
+            return this.layers[i];
+        }
+        set
+        {
+            if(i < 0)
+            {
+                this[this.count + i] = value;
+            }
+            this.layers[i] = value;
+        }
+    }
+    public Layer[] GetLayers()
+    {
+        return this.layers;
     }
 
-    public int LayerCount()
+    public Neurons GenerateNeurons()
     {
-        return this.count*layers.Length;
-    }
-    public T GetLayer(int i)
-    {
-        int size = this.LayerCount();
-        if(i < 0)
+        List<Neuron> result = new List<Neuron>();
+        Neuron[] n = new Neuron[0];
+        for(int i = 0; i < this.count; i++)
         {
-            i = size + i;
+            n = this[i].GenerateConnectedNeurons(n);
+            result.AddRange(n);
         }
-        return this.layers[i/* % size*/];
-    }
-    public G[] GetLayers<G>() where G : T
-    {
-        List<G> g = new List<G>();
-        T[] layers = this.GetLayers();
-        for(int i = 0, l = layers.Length; i < l; i++)
-        {
-            if(layers[i] is G)
-            {
-                g.Add((G)layers[i]);
-            }
-        }
-        return g.ToArray();
-    }
-    public T[] GetLayers()
-    {
-        if(this.count < 0) throw new ArgumentOutOfRangeException("Invalid layer count in layergroup: " + this.count);
-        List<T> a = new List<T>(this.layers);
-        for(int i = 1; i < this.count; i++)
-        {
-            a.AddRange(this.layers);
-        }
-        return a.ToArray();
+        return new Neurons(result.ToArray());
     }
     
-    public static implicit operator LayerGroup<T>(T[] array)
+    public static implicit operator LayerGroup(Layer layer)
     {
-        return new LayerGroup<T>(array);
+        return new LayerGroup(layer);
+    }
+    public static implicit operator LayerGroup(Layer[] array)
+    {
+        return new LayerGroup(array);
     }
 
-    public static implicit operator T[](LayerGroup<T> group)
+    public static implicit operator Layer[](LayerGroup group)
     {
         return group.GetLayers();
     }
-    public static LayerGroup<T> operator +(LayerGroup<T> a, LayerGroup<T> b)
+    public static LayerGroup operator +(LayerGroup a, LayerGroup b)
     {
-        return new LayerGroup<T>((a.GetLayers().Concat(b.GetLayers())).ToArray<T>());
+        return new LayerGroup(a.GetLayers().Concat(b.GetLayers()).ToArray());
     }
-    public static LayerGroup<T> operator *(LayerGroup<T> group, int repeats)
+    public static LayerGroup operator *(LayerGroup group, int repeats)
     {
-        return new LayerGroup<T>(group.GetLayers(), group.count*repeats);
+        LayerGroup g = new Layer[group.count*repeats];
+        for(int i = 0; i < group.count; i++)
+        {
+            Layer layer = group.layers[i];
+            for(int j = 0; j < repeats; j++)
+            {
+                g.layers[i + j*group.count] = layer;
+                layer = new Layer(layer.size, layer.bounding);
+            }
+        }
+        return g;
     }
 }
