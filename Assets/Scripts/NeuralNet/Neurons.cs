@@ -22,6 +22,33 @@ public class Neurons
         }
     }
 
+    private Neuron[] GetUpdateableNeurons()
+    {
+        List<Neuron> neurons = new List<Neuron>();
+        for(int i = 0; i < this.count; i++)
+        {
+            Neuron n = this[i];
+            if(n.IsUpdateable())
+            {
+                neurons.Add(n);
+            }
+        }
+        return neurons.ToArray();
+    }
+
+    public void UpdateNeurons(int ncount)
+    {
+        Neuron[] neurons = this.GetUpdateableNeurons();
+        int l = neurons.Length;
+        int[] hits = new int[ncount];
+        for(int n = 0; n < ncount; n++)
+        {
+            int i = Utils.NextFiltered(BallPit.rand, 0, l, hits, n);
+            hits[n] = i;
+            neurons[i].Update();
+        }
+    }
+
     public Neuron Sweep(float x)
     {
         int i = (int)Mathf.Max(Mathf.Min(Mathf.Floor(x*this.count), this.count - 1), 0);
@@ -90,7 +117,7 @@ public class Neurons
     public static LayerGroup GenerateHiddenLayers(int nodeCount)
     {
         List<Layer> g = new List<Layer>();
-        for(int n = 0; n < nodeCount;)
+        for(int n = 0; n < nodeCount; n++)
         {
             int size = BallPit.rand.Next((nodeCount - n)/2, nodeCount - n);
             if(size > 0)

@@ -13,11 +13,16 @@ public class Neuron
             this.connections[neurons[i]] = Utils.GetRandomWeigthLin(BallPit.rand);
         }
     }
-    public Neuron(Func<float, float> boundingfloat, float value = 0) : this(new Dictionary<Neuron, float>(), boundingfloat, value) {}
+    public Neuron(Func<float, float> bounding, float value = 0) : this(new Dictionary<Neuron, float>(), bounding, value) {}
     public Neuron(Dictionary<Neuron, float> connections, Func<float, float> bounding, float value = 0)
     {
         this.connections = connections;
         this.value = value;
+    }
+
+    public bool IsUpdateable()
+    {
+        return this.connections.Count != 0;
     }
 
     public void Update()
@@ -30,7 +35,7 @@ public class Neuron
                 float c = this.connections[neuron];
                 y += c*neuron.value;
             }
-            this.value = this.bounding(y);
+            this.value = this.bounding != null ? this.bounding(y) : y;
         }
     }
 }

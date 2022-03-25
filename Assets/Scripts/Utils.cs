@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using System.Collections.Generic;
 public static class Utils
 {
     public static readonly float oneThird = 1.0f/3.0f;
@@ -18,13 +19,30 @@ public static class Utils
     public static readonly float speedOfSoundSquared = Mathf.Pow(Utils.speedOfSound, 2);
     public static readonly float atmosphericPressure = 101325f;
     
+    public static int NextFiltered(System.Random rand, int a, int b, int[] except, int n)
+    {
+        int i = rand.Next(a, b - n);
+        int shift = 0;
+        for(int j = 0; j < n; j++)
+        {
+            if(i >= except[j])
+            {
+                shift++;
+            }
+            else if(shift != 0)
+            {
+                break;
+            }
+        }
+        return i + shift;
+    }
     public static bool GetRandomBool(System.Random rand)
     {
-        return rand.Next(0, 1) == 1;
+        return rand.Next(0, 2) == 1;
     }
     public static int GetRandomSign(System.Random rand)
     {
-        return rand.Next(0, 1)*2-1;
+        return rand.Next(0, 2)*2-1;
     }
     public static float GetRandomMultiplier(System.Random rand)
     {

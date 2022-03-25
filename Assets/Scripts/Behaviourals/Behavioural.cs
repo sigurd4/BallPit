@@ -28,7 +28,7 @@ public class Behavioural
         Neuron[] output = neurons.Get(startOut, this.outputLayerNodes);
 
         float[] inVal = Array.ConvertAll(input, (Neuron n) => n.value);
-        float[] outVal = Array.ConvertAll(input, (Neuron n) => n.value);
+        float[] outVal = Array.ConvertAll(output, (Neuron n) => n.value);
 
         this.UpdateNeurons(inVal, outVal);
 

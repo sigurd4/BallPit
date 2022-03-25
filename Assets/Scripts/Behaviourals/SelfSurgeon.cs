@@ -21,6 +21,10 @@ public class SelfSurgeon : Behavioural
         Neuron to = this.ball.neurons.Sweep(a);
         Neuron from = this.ball.neurons.Sweep(b);
 
+        if(!to.connections.ContainsKey(from))
+        {
+            to.connections.Add(from, 0);
+        }
         to.connections[from] = x*m + to.connections[from]*(1 - m);
     }
 }

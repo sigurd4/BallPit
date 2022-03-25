@@ -23,25 +23,25 @@ public class Ball : MonoBehaviour
         //this.scale /= BallPit.scale;
 
         this.behaviourals = new Behavioural[]{
-            ////new MemoryStack(this, 4, 8),
+            new MemoryStack(this, 4, 8, 3),
             ////new SelfDigester(this),
-            ////new Vocalizer(this, 16, 0.1f),
-            ////new Accelerometer(this, 10f),
-            ////new AgeKnower(this, 0.0001f),
+            new Vocalizer(this, 16, 0.1f),
+            new Accelerometer(this, 10f),
+            new AgeKnower(this, 0.0001f),
             ////new ChargeManipulator(this, 10000000000000000000f),
             new Colorizer(this),
-            ////new FatigueKnower(this, 16),
-            ////new MassKnower(this, 1f),
-            ////new SelfSurgeon(this),
-            ////new SelfMutator(this, 16),
-            ////new TorqueEngine(this, 3600),
+            new FatigueKnower(this, 16),
+            new MassKnower(this, 1f),
+            new SelfSurgeon(this),
+            new SelfMutator(this, 16),
+            new TorqueEngine(this, 3600),
             ////new Wiggler(this, 1500f, 6),
-            ////new Ears(this, 16, 100)
+            new Ears(this, 16, 100)
         };
 
         (int isize, int osize) = this.IOSize();
 
-        LayerGroup brainStructure = new Layer(isize) + new Layer(2, Neurons.Sigmoid)*2 + new Layer(osize);
+        LayerGroup brainStructure = new Layer(isize) + Neurons.GenerateHiddenLayers(16) + new Layer(osize);
 
         this.neurons = brainStructure.GenerateNeurons();
 
@@ -64,7 +64,8 @@ public class Ball : MonoBehaviour
         }
         else
         {
-            this.UpdateNeurons();
+            this.UpdateBehaviour();
+            this.neurons.UpdateNeurons(8);
 
             this.age++;
         }
@@ -85,7 +86,10 @@ public class Ball : MonoBehaviour
     
     #region neurons
         public Neurons neurons;
-        private void UpdateNeurons()
+    #endregion
+
+    #region behaviour
+        private void UpdateBehaviour()
         {
             if(this.neurons == null) this.Kill();
 
