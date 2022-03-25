@@ -35,13 +35,13 @@ public class Ball : MonoBehaviour
             new SelfSurgeon(this),
             new SelfMutator(this, 16),
             new TorqueEngine(this, 3600),
-            ////new Wiggler(this, 1500f, 6),
+            new Wiggler(this, 1500f, 6),
             new Ears(this, 16, 100)
         };
 
         (int isize, int osize) = this.IOSize();
 
-        LayerGroup brainStructure = new Layer(isize) + Neurons.GenerateHiddenLayers(16) + new Layer(osize);
+        LayerGroup brainStructure = new Layer(isize) + Neurons.GenerateHiddenLayers(64) + new Layer(osize);
 
         this.neurons = brainStructure.GenerateNeurons();
 
