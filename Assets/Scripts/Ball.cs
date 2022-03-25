@@ -23,7 +23,7 @@ public class Ball : MonoBehaviour
         //this.scale /= BallPit.scale;
 
         this.behaviourals = new Behavioural[]{
-            new MemoryStack(this, 4, 8, 3),
+            new MemoryStack(this, BallPit.rand.Next(1, 32), BallPit.rand.Next(1, 32), 2),
             ////new SelfDigester(this),
             new Vocalizer(this, 16, 0.1f),
             new Accelerometer(this, 10f),
@@ -34,14 +34,14 @@ public class Ball : MonoBehaviour
             new MassKnower(this, 1f),
             new SelfSurgeon(this),
             new SelfMutator(this, 16),
-            new TorqueEngine(this, 3600),
-            new Wiggler(this, 1500f, 6),
+            new TorqueEngine(this, 360),
+            new Wiggler(this, 15000f, 2),
             new Ears(this, 16, 100)
         };
 
         (int isize, int osize) = this.IOSize();
 
-        LayerGroup brainStructure = new Layer(isize) + Neurons.GenerateHiddenLayers(64) + new Layer(osize);
+        LayerGroup brainStructure = new Layer(isize) + Neurons.GenerateHiddenLayers(BallPit.rand.Next(2, 64), 2) + new Layer(osize);
 
         this.neurons = brainStructure.GenerateNeurons();
 
@@ -64,8 +64,11 @@ public class Ball : MonoBehaviour
         }
         else
         {
+            if(neurons != null)
+            {
+                this.neurons.UpdateNeurons(64);
+            }
             this.UpdateBehaviour();
-            this.neurons.UpdateNeurons(8);
 
             this.age++;
         }
@@ -100,7 +103,10 @@ public class Ball : MonoBehaviour
             for(int i = 0, l = this.behaviourals.Length; i < l; i++)
             {
                 Behavioural b = behaviourals[i];
-                b.UpdateNeurons(this.neurons, si, so - osize);
+                if(!b.UpdateNeurons(this.neurons, si, so - osize))
+                {
+                    this.Kill();
+                }
                 si += b.inputLayerNodes;
                 so += b.outputLayerNodes;
             }
@@ -129,7 +135,7 @@ public class Ball : MonoBehaviour
             }
             set
             {
-                this.fatigue = Mathf.Max(0, value);
+                this._fatigue = Mathf.Max(0, value);
                 this.fatigueCoefficient = Mathf.Exp(-value/1000);
             }
         }

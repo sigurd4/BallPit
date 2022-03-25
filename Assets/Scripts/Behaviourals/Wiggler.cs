@@ -12,7 +12,7 @@ public class Wiggler : Behavioural
 
     protected override void UpdateNeurons(float[] inputLayer, float[] outputLayer)
     {
-        /*float[] polynomial = new float[this.polySize];
+        float[] polynomial = new float[this.polySize];
         for(int i = 0; i < this.polySize; i++)
         {
             polynomial[i] = Mathf.Pow(Neurons.Sigmoid(outputLayer[i]), 2);
@@ -20,15 +20,15 @@ public class Wiggler : Behavioural
 
         float fatigueCoefficient = this.ball.fatigueCoefficient;
 
-        float mass = this.ball.GetComponent<Rigidbody>().mass;
+        float mass = this.ball.mass;
 
         Vector3 force = this.GetWiggleVector(polynomial)*Time.deltaTime*this.wiggle*mass*fatigueCoefficient;
-        this.ball.GetComponent<Rigidbody>().AddForce(force);
+        this.ball.rigidbody.AddForce(force);
 
-        this.ball.Fatigue(force.magnitude*force.magnitude/mass*Time.timeScale);*/
+        this.ball.AddFatigue(force.magnitude*force.magnitude/mass*Time.timeScale);
     }
 
-    /*private Vector3 GetWiggleVector(float[] polynomial)
+    private Vector3 GetWiggleVector(float[] polynomial)
     {
         float y = 0;
         for(int i = 0, l = polynomial.Length; i < l; i++)
@@ -44,5 +44,5 @@ public class Wiggler : Behavioural
             }
         }
         return Utils.GetRandomDirection(Wiggler.rand)*this.ball.transform.up*y;
-    }*/
+    }
 }

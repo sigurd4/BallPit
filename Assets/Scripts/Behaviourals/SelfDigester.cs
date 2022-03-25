@@ -9,11 +9,11 @@ public class SelfDigester : Behavioural
     
     protected override void UpdateNeurons(float[] inputLayer, float[] outputLayer)
     {
-        /*float fatigueCoefficient = this.ball.fatigueCoefficient;
+        float fatigueCoefficient = this.ball.fatigueCoefficient;
 
         float mass = this.ball.GetComponent<Rigidbody>().mass;
 
-        float fatigue = this.ball.GetFatigue();
+        float fatigue = this.ball.fatigue;
         
         //fatigue *= Mathf.Exp(-1000000*Time.timeScale);
         
@@ -22,19 +22,20 @@ public class SelfDigester : Behavioural
         {
             fatigue -= fatigueRecovery;
         }
-        this.ball.SetFatigue(fatigue);*/
+        this.ball.fatigue = fatigue;
     }
     
-    /*private bool BurnMass(float energy)
+    private bool BurnMass(float energy)
     {
         if(energy == 0) return false;
 
-        float scale = (float)(1 - energy/this.ball.GetComponent<Rigidbody>().mass/Utils.speedOfLightSquared);
-        if(scale <= 0)
+        float mass = ball.mass;
+        float dmass = energy/Utils.speedOfLightSquared;
+        if(dmass > mass)
         {
-            ball.Kill();
-            return true;
+            return false;
         }
-        return ball.ScaleMass(scale);
-    }*/
+        ball.mass = mass - dmass;
+        return true;
+    }
 }

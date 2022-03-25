@@ -10,9 +10,9 @@ public class TorqueEngine : Behavioural
     
     protected override void UpdateNeurons(float[] inputLayer, float[] outputLayer)
     {
-        /*float fatigueCoefficient = this.ball.fatigueCoefficient;
+        float fatigueCoefficient = this.ball.fatigueCoefficient;
 
-        float mass = this.ball.GetComponent<Rigidbody>().mass;
+        float mass = this.ball.mass;
 
         Vector3 torqueActuator = new Vector3(
             Neurons.Tanh(outputLayer[0]),
@@ -24,10 +24,10 @@ public class TorqueEngine : Behavioural
 
         Vector3 torque = this.torque*torqueActuator*fatigueCoefficient*mass*Time.deltaTime;
 
-        this.ball.GetComponent<Rigidbody>().AddRelativeTorque(torque);
+        this.ball.rigidbody.AddRelativeTorque(torque);
 
-        float inertia = this.ball.GetComponent<Rigidbody>().inertiaTensor.magnitude;
+        float inertia = this.ball.rigidbody.inertiaTensor.magnitude;
 
-        this.ball.Fatigue(torque.magnitude*torque.magnitude/inertia*Time.deltaTime);*/
+        this.ball.AddFatigue(torque.magnitude*torque.magnitude/inertia*Time.deltaTime);
     }
 }

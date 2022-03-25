@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 public class Neuron
 {
     public readonly Dictionary<Neuron, float> connections;
@@ -10,7 +11,7 @@ public class Neuron
     {
         for(int i = 0, l = neurons.Length; i < l; i++)
         {
-            this.connections[neurons[i]] = Utils.GetRandomWeigthLin(BallPit.rand);
+            this.connections[neurons[i]] = Mathf.Pow(Utils.GetRandomWeigthLin(BallPit.rand), 3);
         }
     }
     public Neuron(Func<float, float> bounding, float value = 0) : this(new Dictionary<Neuron, float>(), bounding, value) {}

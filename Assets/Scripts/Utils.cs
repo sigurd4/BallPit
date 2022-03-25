@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 public static class Utils
 {
     public static readonly float oneThird = 1.0f/3.0f;
@@ -19,6 +20,20 @@ public static class Utils
     public static readonly float speedOfSoundSquared = Mathf.Pow(Utils.speedOfSound, 2);
     public static readonly float atmosphericPressure = 101325f;
     
+    public static int[] ShuffledIndexes(int length)
+    {
+        int[] o = new int[length];
+        for(int i = 0; i < length; i++)
+        {
+            o[i] = i;
+        }
+
+        return o;
+    }
+    public static T[] ShuffleArray<T>(T[] o)
+    {
+        return o.OrderBy<T, int>((e) => BallPit.rand.Next()).ToArray();
+    }
     public static int NextFiltered(System.Random rand, int a, int b, int[] except, int n)
     {
         int i = rand.Next(a, b - n);

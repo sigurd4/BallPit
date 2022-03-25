@@ -22,8 +22,12 @@ public class Behavioural
         
     }
 
-    public void UpdateNeurons(Neurons neurons, int startIn, int startOut)
+    public bool UpdateNeurons(Neurons neurons, int startIn, int startOut)
     {
+        if(neurons == null)
+        {
+            return false;
+        }
         Neuron[] input = neurons.Get(startIn, this.inputLayerNodes);
         Neuron[] output = neurons.Get(startOut, this.outputLayerNodes);
 
@@ -36,6 +40,7 @@ public class Behavioural
         {
             input[i].value = inVal[i];
         }
+        return true;
     }
     protected virtual void UpdateNeurons(float[] inputLayer, float[] outputLayer)
     {

@@ -40,12 +40,18 @@ public class Neurons
     {
         Neuron[] neurons = this.GetUpdateableNeurons();
         int l = neurons.Length;
-        int[] hits = new int[ncount];
-        for(int n = 0; n < ncount; n++)
+        int last = ncount/l;
+        int iterations = last + 1;
+        for(int j = 0; j < iterations; j++)
         {
-            int i = Utils.NextFiltered(BallPit.rand, 0, l, hits, n);
-            hits[n] = i;
-            neurons[i].Update();
+            int N = j == last ? ncount % l : l;
+            int[] hits = new int[N];
+            for(int n = 0; n < N; n++)
+            {
+                int i = Utils.NextFiltered(BallPit.rand, 0, l, hits, n);
+                hits[n] = i;
+                neurons[i].Update();
+            }
         }
     }
 
@@ -114,12 +120,12 @@ public class Neurons
         }
     #endregion
 
-    public static LayerGroup GenerateHiddenLayers(int nodeCount)
+    public static LayerGroup GenerateHiddenLayers(int nodeCount, int bottleneck)
     {
         List<Layer> g = new List<Layer>();
-        for(int n = 0; n < nodeCount; n++)
+        for(int n = 0; n + bottleneck < nodeCount; n++)
         {
-            int size = BallPit.rand.Next((nodeCount - n)/2, nodeCount - n);
+            int size = BallPit.rand.Next(bottleneck, nodeCount - n);
             if(size > 0)
             {
                 n += size;

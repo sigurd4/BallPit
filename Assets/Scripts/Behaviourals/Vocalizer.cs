@@ -11,9 +11,9 @@ public class Vocalizer : Behavioural
 
     protected override void UpdateNeurons(float[] inputLayer, float[] outputLayer)
     {
-        /*this.ball.voice = new float[this.voiceComplexity];
+        this.ball.voice = new float[this.voiceComplexity];
 
-        float volume = ball.getSurfaceVolume();
+        float volume = ball.volume;
 
         float m = Neurons.Sigmoid(outputLayer[0])*this.vocalStrength;
         float P = 0;
@@ -22,6 +22,6 @@ public class Vocalizer : Behavioural
             float a = outputLayer[i + 1]*m;
             this.ball.voice[i] = a*this.ball.fatigueCoefficient;
         }
-        this.ball.Fatigue(volume*Mathf.Pow(P, 2)/2/Utils.atmosphericPressure/Utils.speedOfSoundSquared);*/
+        this.ball.AddFatigue(volume*Mathf.Pow(P, 2)/2/Utils.atmosphericPressure/Utils.speedOfSoundSquared);
     }
 }

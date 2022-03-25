@@ -10,17 +10,17 @@ public class ChargeManipulator : Behavioural
 
     protected override void UpdateNeurons(float[] inputLayer, float[] outputLayer)
     {
-        /*float fatigueCoefficient = this.ball.fatigueCoefficient;
+        float fatigueCoefficient = this.ball.fatigueCoefficient;
 
-        float mass = this.ball.GetComponent<Rigidbody>().mass;
+        float mass = this.ball.mass;
 
         float charge = Neurons.Tanh(outputLayer[0])*this.scale*fatigueCoefficient*mass;
         
-        float radius = this.ball.GetRadius();
+        float radius = this.ball.radius;
         float energy = Utils.k*(Mathf.Pow(charge, 3) - Mathf.Pow(this.ball.charge, 3))/radius;
         this.ball.charge = charge;
 
-        this.ball.Fatigue(energy);
+        this.ball.AddFatigue(energy);
         
         if(this.ball.charge != 0)
         {
@@ -36,6 +36,6 @@ public class ChargeManipulator : Behavioural
             }
             force *= this.ball.charge*Utils.k;
             this.ball.GetComponent<Rigidbody>().AddForce(force);
-        }*/
+        }
     }
 }
