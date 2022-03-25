@@ -5,12 +5,16 @@ using System.Collections.Generic;
 public class Neurons
 {
     private readonly Neuron[] neurons;
+    public readonly Neurons updatableNeurons;
+    private readonly int updatableCount;
     public readonly int count;
 
     public Neurons(Neuron[] neurons)
     {
         this.neurons = neurons;
         this.count = neurons.Length;
+
+        this.updatableNeurons = this.GetUpdateableNeurons();
     }
 
     public Neuron this[int i]
@@ -22,7 +26,7 @@ public class Neurons
         }
     }
 
-    private Neuron[] GetUpdateableNeurons()
+    private Neurons GetUpdateableNeurons()
     {
         List<Neuron> neurons = new List<Neuron>();
         for(int i = 0; i < this.count; i++)
@@ -33,13 +37,16 @@ public class Neurons
                 neurons.Add(n);
             }
         }
-        return neurons.ToArray();
+        if(neurons.Count == this.count)
+        {
+            return this;
+        }
+        return new Neurons(neurons.ToArray());
     }
 
     public void UpdateNeurons(int ncount)
     {
-        Neuron[] neurons = this.GetUpdateableNeurons();
-        int l = neurons.Length;
+        int l = this.updatableNeurons.count;
         int last = ncount/l;
         int iterations = last + 1;
         for(int j = 0; j < iterations; j++)
@@ -50,7 +57,7 @@ public class Neurons
             {
                 int i = Utils.NextFiltered(BallPit.rand, 0, l, hits, n);
                 hits[n] = i;
-                neurons[i].Update();
+                this.updatableNeurons[i].Update();
             }
         }
     }
@@ -82,6 +89,7 @@ public class Neurons
         }
         public static float Modulus(float x)
         {
+            x = Neurons.Finite(x);
             return -(-(x%1))%1;
         }
         public static float Sigmoid(float x)

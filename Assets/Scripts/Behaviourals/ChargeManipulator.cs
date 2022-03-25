@@ -1,11 +1,12 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System;
 public class ChargeManipulator : Behavioural
 {
-    public float scale;
-    public ChargeManipulator(Ball ball, float scale) : base(ball, 0, 1)
-    {        
-        this.scale = scale;
+    public float power;
+    public ChargeManipulator(Ball ball, float power) : base(ball, 0, 1)
+    {
+        this.power = power;
     }
 
     protected override void UpdateNeurons(float[] inputLayer, float[] outputLayer)
@@ -14,28 +15,16 @@ public class ChargeManipulator : Behavioural
 
         float mass = this.ball.mass;
 
-        float charge = Neurons.Tanh(outputLayer[0])*this.scale*fatigueCoefficient*mass;
+        float charge = Neurons.Tanh(outputLayer[0])*this.power*fatigueCoefficient*mass;
         
-        float radius = this.ball.radius;
-        float energy = Utils.k*(Mathf.Pow(charge, 3) - Mathf.Pow(this.ball.charge, 3))/radius;
-        this.ball.charge = charge;
-
-        this.ball.AddFatigue(energy);
-        
-        if(this.ball.charge != 0)
+        if(!Single.IsNaN(charge))
         {
-            HashSet<Ball> balls = Ball.GetLiving();
-            Vector3 force = Vector3.zero;
+            float radius = this.ball.radius;
+            float energy = Mathf.Abs(Utils.k*(Mathf.Pow(charge, 3) - Mathf.Pow(this.ball.charge, 3))/radius);
 
-            foreach(Ball other in balls)
-            {
-                if(other == null || other == this.ball) continue;
-                Vector3 r = other.transform.position - this.ball.transform.position;
+            this.ball.charge = charge;
 
-                force += r.normalized*other.charge/Mathf.Pow(r.magnitude, 2);
-            }
-            force *= this.ball.charge*Utils.k;
-            this.ball.GetComponent<Rigidbody>().AddForce(force);
+            this.ball.AddFatigue(energy);
         }
     }
 }

@@ -9,9 +9,10 @@ public class Ball : MonoBehaviour
     public long killCount = 0;
     public float fatigueCoefficient = 1;
     public float charge = 0;
-    public readonly float density = 0.001f;
+    public readonly float density = 10.0f;
     public float[] voice = new float[0];
 
+    private int behaviourStage = 0;
     public Behavioural[] behaviourals;
     public new Rigidbody rigidbody;
     public MeshRenderer meshrenderer;
@@ -23,25 +24,30 @@ public class Ball : MonoBehaviour
         //this.scale /= BallPit.scale;
 
         this.behaviourals = new Behavioural[]{
-            new MemoryStack(this, BallPit.rand.Next(1, 32), BallPit.rand.Next(1, 32), 2),
-            ////new SelfDigester(this),
+            new MemoryStack(this, BallPit.rand.Next(1, 64), BallPit.rand.Next(1, 8), 1),
+            new MemoryStack(this, BallPit.rand.Next(1, 4), BallPit.rand.Next(1, 16), 2),
+            //new SelfDigester(this, 0.00000000001f),
             new Vocalizer(this, 16, 0.1f),
             new Accelerometer(this, 10f),
             new AgeKnower(this, 0.0001f),
-            ////new ChargeManipulator(this, 10000000000000000000f),
-            new Colorizer(this),
+            new ChargeManipulator(this, 0.00001f),
+            new Colorizer(this, 0.0001f, 0.1f),
             new FatigueKnower(this, 16),
             new MassKnower(this, 1f),
             new SelfSurgeon(this),
             new SelfMutator(this, 16),
-            new TorqueEngine(this, 360),
+            new TorqueEngine(this, 36000),
             new Wiggler(this, 15000f, 2),
-            new Ears(this, 16, 100)
+            new Ears(this, 16, 100),
+            new FreeEnergy(this, 0.01f),
+            new EnergyExchange(this, 6, 1f)
         };
+        this.behaviourals = Utils.ShuffleArray(this.behaviourals);
 
         (int isize, int osize) = this.IOSize();
 
-        LayerGroup brainStructure = new Layer(isize) + Neurons.GenerateHiddenLayers(BallPit.rand.Next(2, 64), 2) + new Layer(osize);
+        int hsizeMax = BallPit.rand.Next(2, 1024);
+        LayerGroup brainStructure = new Layer(isize) + Neurons.GenerateHiddenLayers(hsizeMax, BallPit.rand.Next(1, hsizeMax)) + new Layer(osize);
 
         this.neurons = brainStructure.GenerateNeurons();
 
@@ -66,9 +72,9 @@ public class Ball : MonoBehaviour
         {
             if(neurons != null)
             {
-                this.neurons.UpdateNeurons(64);
+                this.neurons.UpdateNeurons(2);
+                this.UpdateBehaviour();
             }
-            this.UpdateBehaviour();
 
             this.age++;
         }
@@ -85,35 +91,41 @@ public class Ball : MonoBehaviour
             }
             return (Math.Max(1, isize), Math.Max(1, osize));
         }
+        private void UpdateBehaviour()
+        {
+            this.UpdateBehaviour(this.behaviourStage);
+            this.behaviourStage = (this.behaviourStage + 1) % this.behaviourals.Length;
+        }
+        private void UpdateBehaviour(int index)
+        {
+            int si = 0;
+            int so = 0;
+            for(int i = 0, l = index; i < l; i++)
+            {
+                Behavioural prev = behaviourals[i];
+                si += prev.inputLayerNodes;
+                so += prev.outputLayerNodes;
+            }
+
+            (int isize, int osize) = this.IOSize();
+            Behavioural behavioural = behaviourals[index];
+            if(!behavioural.UpdateNeurons(this.neurons, si, so - osize))
+            {
+                this.Kill("Failed to update behavioural: " + behavioural.ToString());
+            }
+        }
     #endregion
     
     #region neurons
         public Neurons neurons;
     #endregion
 
-    #region behaviour
-        private void UpdateBehaviour()
-        {
-            if(this.neurons == null) this.Kill();
-
-            (int isize, int osize) = this.IOSize();
-
-            int si = 0;
-            int so = 0;
-            for(int i = 0, l = this.behaviourals.Length; i < l; i++)
-            {
-                Behavioural b = behaviourals[i];
-                if(!b.UpdateNeurons(this.neurons, si, so - osize))
-                {
-                    this.Kill();
-                }
-                si += b.inputLayerNodes;
-                so += b.outputLayerNodes;
-            }
-        }
-    #endregion
-
     #region life
+        public void Kill(string message)
+        {
+            this.Kill();
+            throw new Exception(message);
+        }
         public void Kill()
         {
             BallPit.balls.Remove(this);
@@ -135,13 +147,33 @@ public class Ball : MonoBehaviour
             }
             set
             {
-                this._fatigue = Mathf.Max(0, value);
-                this.fatigueCoefficient = Mathf.Exp(-value/1000);
+                if(!Single.IsNaN(value))
+                {
+                    this._fatigue = Mathf.Max(0, value);
+                    this.fatigueCoefficient = Mathf.Exp(-value/1000);
+                }
             }
         }
         public void AddFatigue(float energy)
         {
             this.fatigue += energy;
+        }
+        public float energy
+        {
+            get
+            {
+                return - this.fatigue;
+            }
+            set
+            {
+                float fatigue = this.fatigue - value;
+                if(fatigue < 0)
+                {
+                    this.mass -= fatigue/Utils.speedOfLightSquared;
+                    fatigue = 0;
+                }
+                this.fatigue = fatigue;
+            }
         }
     #endregion
     
@@ -169,7 +201,10 @@ public class Ball : MonoBehaviour
                 }
                 set
                 {
-                    this.transform.position = value;
+                    if(Utils.IsFinite(value))
+                    {
+                        this.transform.position = value;
+                    }
                 }
             }
             public Vector3 velocity
@@ -180,7 +215,10 @@ public class Ball : MonoBehaviour
                 }
                 set
                 {
-                    this.rigidbody.velocity = value;
+                    if(Utils.IsFinite(value))
+                    {
+                        this.rigidbody.velocity = value;
+                    }
                 }
             }
         #endregion
@@ -201,8 +239,14 @@ public class Ball : MonoBehaviour
                     }
                     this._radius = value;
                     
+                    Vector3 scale = this.scale;
+                    if(Utils.IsNaN(scale))
+                    {
+                        this.Kill();
+                        return;
+                    }
                     //UPDATE UNITY GAMEOBJECT
-                    this.transform.localScale = this.scale;
+                    this.transform.localScale = scale;
                     this.rigidbody.mass = this.mass;
                 }
             }

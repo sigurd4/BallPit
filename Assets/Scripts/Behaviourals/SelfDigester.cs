@@ -1,10 +1,10 @@
 using UnityEngine;
 public class SelfDigester : Behavioural
 {
-    public static float digestion = 1/100000000;
-    public SelfDigester(Ball ball) : base(ball, 0, 2)
+    private readonly float digestion;
+    public SelfDigester(Ball ball, float digestion) : base(ball, 0, 2)
     {
-
+        this.digestion = digestion;
     }
     
     protected override void UpdateNeurons(float[] inputLayer, float[] outputLayer)
@@ -15,9 +15,7 @@ public class SelfDigester : Behavioural
 
         float fatigue = this.ball.fatigue;
         
-        //fatigue *= Mathf.Exp(-1000000*Time.timeScale);
-        
-        float fatigueRecovery = fatigue*(Neurons.Sigmoid(outputLayer[0]) - fatigueCoefficient)*Neurons.Sigmoid(outputLayer[1]);
+        float fatigueRecovery = fatigue*((1 - Mathf.Exp(-this.digestion*Time.deltaTime*Neurons.Sigmoid(outputLayer[0]))) - fatigueCoefficient)*(1 - Mathf.Exp(-this.digestion*Time.deltaTime*Neurons.Sigmoid(outputLayer[1])));
         if(this.BurnMass(fatigueRecovery))
         {
             fatigue -= fatigueRecovery;
@@ -33,6 +31,7 @@ public class SelfDigester : Behavioural
         float dmass = energy/Utils.speedOfLightSquared;
         if(dmass > mass)
         {
+            this.ball.Kill();
             return false;
         }
         ball.mass = mass - dmass;

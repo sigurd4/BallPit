@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 public class TorqueEngine : Behavioural
 {
     private readonly float torque;
@@ -22,7 +23,12 @@ public class TorqueEngine : Behavioural
 
         inputLayer[0] = torqueActuator.magnitude;
 
-        Vector3 torque = this.torque*torqueActuator*fatigueCoefficient*mass*Time.deltaTime;
+        Vector3 torque = torqueActuator*(this.torque*fatigueCoefficient*mass*Time.deltaTime);
+
+        if(!Utils.IsFinite(torque))
+        {
+            return;
+        }
 
         this.ball.rigidbody.AddRelativeTorque(torque);
 

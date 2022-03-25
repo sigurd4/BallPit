@@ -18,8 +18,8 @@ public class SelfSurgeon : Behavioural
         x = Neurons.Tanh(x);
         m = Neurons.Sigmoid(m);
         
-        Neuron to = this.ball.neurons.Sweep(a);
-        Neuron from = this.ball.neurons.Sweep(b);
+        Neuron to = this.ball.neurons.updatableNeurons.Sweep(a);
+        Neuron from = this.ball.neurons.updatableNeurons.Sweep(b);
 
         if(!to.connections.ContainsKey(from))
         {

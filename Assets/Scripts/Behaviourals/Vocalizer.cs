@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 public class Vocalizer : Behavioural
 {
     private readonly int voiceComplexity;
@@ -19,8 +20,14 @@ public class Vocalizer : Behavioural
         float P = 0;
         for(int i = 0; i < this.voiceComplexity; i++)
         {
-            float a = outputLayer[i + 1]*m;
-            this.ball.voice[i] = a*this.ball.fatigueCoefficient;
+            float a = Neurons.Tanh(outputLayer[i + 1])*m*this.ball.fatigueCoefficient;
+            
+            this.ball.voice[i] = a - this.ball.voice[i];
+            if(Single.IsNaN(this.ball.voice[i]))
+            {
+                this.ball.voice[i] = 0;
+                continue;
+            }
         }
         this.ball.AddFatigue(volume*Mathf.Pow(P, 2)/2/Utils.atmosphericPressure/Utils.speedOfSoundSquared);
     }

@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 public class Wiggler : Behavioural
 {
     private static readonly System.Random rand = new System.Random(/*DateTime.Now.Millisecond*324884564*this.GetHashCode()*/);
@@ -23,6 +24,10 @@ public class Wiggler : Behavioural
         float mass = this.ball.mass;
 
         Vector3 force = this.GetWiggleVector(polynomial)*Time.deltaTime*this.wiggle*mass*fatigueCoefficient;
+        if(!Utils.IsFinite(force))
+        {
+            return;
+        }
         this.ball.rigidbody.AddForce(force);
 
         this.ball.AddFatigue(force.magnitude*force.magnitude/mass*Time.timeScale);

@@ -46,4 +46,9 @@ public class Behavioural
     {
 
     }
+
+    public virtual void UpdateCommutativePair(Ball other)
+    {
+        
+    }
 }

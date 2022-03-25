@@ -75,4 +75,28 @@ public static class Utils
     {
         return Mathf.Pow(value, Utils.oneThird);
     }
+    public static bool IsNaN(Vector3 vec)
+    {
+        return Single.IsNaN(vec[0]) || Single.IsNaN(vec[1]) || Single.IsNaN(vec[2]);
+    }
+    public static bool IsInfinity(Vector3 vec)
+    {
+        return Single.IsInfinity(vec[0]) || Single.IsInfinity(vec[1]) || Single.IsInfinity(vec[2]);
+    }
+    public static bool IsFinite(Vector3 vec)
+    {
+        return !(Utils.IsNaN(vec) || Utils.IsInfinity(vec));
+    }
+    public static T[] ToArray<T>(HashSet<T> set)
+    {
+        int count = set.Count;
+        T[] array = new T[count];
+        int i = 0;
+        foreach(T t in set)
+        {
+            array[i] = t;
+            i++;
+        }
+        return array;
+    }
 }

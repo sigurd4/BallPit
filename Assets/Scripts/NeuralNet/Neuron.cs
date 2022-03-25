@@ -4,20 +4,48 @@ using UnityEngine;
 public class Neuron
 {
     public readonly Dictionary<Neuron, float> connections;
-    private readonly Func<float, float> bounding;
-    public float value;
+    public readonly Func<float, float> bounding;
+    private float _value;
+
+    public float value
+    {
+        get
+        {
+            if(Single.IsNaN(this._value))
+            {
+                if(this.IsUpdateable())
+                {
+                    this.Update();
+                    if(!Single.IsNaN(this._value))
+                    {
+                        return this._value;
+                    }
+                }
+                this._value = Utils.GetRandomWeigthLin(BallPit.rand);
+            }
+            return this._value;
+        }
+        set
+        {
+            if(!Single.IsNaN(value))
+            {
+                this._value = this.bounding != null ? this.bounding(value) : value;
+            }
+        }
+    }
 
     public Neuron(Neuron[] neurons, Func<float, float> bounding, float value = 0) : this(bounding, value)
     {
         for(int i = 0, l = neurons.Length; i < l; i++)
         {
-            this.connections[neurons[i]] = Mathf.Pow(Utils.GetRandomWeigthLin(BallPit.rand), 3);
+            this.connections[neurons[i]] = Utils.GetRandomWeigthLin(BallPit.rand);
         }
     }
     public Neuron(Func<float, float> bounding, float value = 0) : this(new Dictionary<Neuron, float>(), bounding, value) {}
     public Neuron(Dictionary<Neuron, float> connections, Func<float, float> bounding, float value = 0)
     {
         this.connections = connections;
+        this.bounding = bounding;
         this.value = value;
     }
 
@@ -28,15 +56,30 @@ public class Neuron
 
     public void Update()
     {
-        if(this.connections.Count > 0)
+        int count = this.connections.Count;
+        if(count > 0)
         {
             float y = 0;
-            foreach(Neuron neuron in this.connections.Keys)
+            try
             {
-                float c = this.connections[neuron];
-                y += c*neuron.value;
+                Neuron[] keys = new Neuron[count];
+                this.connections.Keys.CopyTo(keys, 0);
+                foreach(Neuron neuron in keys)
+                {
+                    float w = 0;
+                    if(!this.connections.TryGetValue(neuron, out w) || Single.IsNaN(w))
+                    {
+                        this.connections.Remove(neuron);
+                        this.connections.Add(neuron, Utils.GetRandomWeigthLin(BallPit.rand));
+                    }
+                    y += w*neuron.value;
+                }
+                this.value = y;
             }
-            this.value = this.bounding != null ? this.bounding(y) : y;
+            catch
+            {
+                return; //Failed to update
+            }
         }
     }
 }
