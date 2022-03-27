@@ -1,2 +1,2 @@
 # BallPit
-Real-time neural network fighting simulator with colourful bouncy balls
+Balls subject to natural selection and evolution, powered by a simple neural network.
