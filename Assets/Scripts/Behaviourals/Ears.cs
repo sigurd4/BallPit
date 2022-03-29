@@ -5,7 +5,7 @@ public class Ears : Behavioural
 {
     int listeningComplexity;
     float maxRadius;
-    public Ears(Ball ball, int listeningComplexity, float maxRadius) : base(ball, listeningComplexity*2, 0)
+    public Ears(Ball ball, int listeningComplexity, float maxRadius) : base(ball, listeningComplexity*2, listeningComplexity*2)
     {
         this.listeningComplexity = listeningComplexity;
         this.maxRadius = maxRadius;
@@ -33,8 +33,13 @@ public class Ears : Behavioural
         }
         for(int i = 0; i < this.listeningComplexity; i++)
         {
-            inputLayer[i*2] = Neurons.Tanh(listening[i][0]);
-            inputLayer[i*2 + 1] = Neurons.Tanh(listening[i][1]);
+            inputLayer[i*2] = Neurons.Tanh(listening[i][0])*Neurons.Tanh(outputLayer[i*2]);
+            inputLayer[i*2 + 1] = Neurons.Tanh(listening[i][1])*Neurons.Tanh(outputLayer[i*2 + 1]);
         }
+    }
+    
+    public override Behavioural Clone(Ball ball)
+    {
+        return new Ears(ball, this.listeningComplexity, this.maxRadius);
     }
 }

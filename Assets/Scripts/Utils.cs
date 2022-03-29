@@ -19,6 +19,8 @@ public static class Utils
     public static readonly float speedOfSound = 343f;
     public static readonly float speedOfSoundSquared = Mathf.Pow(Utils.speedOfSound, 2);
     public static readonly float atmosphericPressure = 101325f;
+
+    public static readonly float earthGravityAcceleration = 9.80665f;
     
     public static int[] ShuffledIndexes(int length)
     {
@@ -59,13 +61,13 @@ public static class Utils
     {
         return rand.Next(0, 2)*2-1;
     }
-    public static float GetRandomMultiplier(System.Random rand)
+    public static float GetRandomPositiveScalar(System.Random rand)
     {
         return (float)rand.Next(0, Int32.MaxValue)/(float)Int32.MaxValue;
     }
     public static float GetRandomWeigthLin(System.Random rand)
     {
-        return Utils.GetRandomSign(rand)*Utils.GetRandomMultiplier(rand);
+        return Utils.GetRandomSign(rand)*Utils.GetRandomPositiveScalar(rand);
     }
     public static Quaternion GetRandomDirection(System.Random rand)
     {

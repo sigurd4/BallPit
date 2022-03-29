@@ -1,59 +1,129 @@
 using System;
 using System.Text; 
 using UnityEngine;
+using UnityEditor;
 using System.Collections.Generic;
 
 public class Ball : MonoBehaviour
 {
+    public static readonly float minSize = 0.001f;
+    public static readonly float minVolume = Utils.spherePerCubeVolume*Ball.minSize*Ball.minSize*Ball.minSize;
     public long age = 0;
     public long killCount = 0;
     public float fatigueCoefficient = 1;
-    public float charge = 0;
-    public readonly float density = 10.0f;
-    public float[] voice = new float[0];
+    public float[] charge = new float[0];
+    public float density = 1.0f;
 
     private int behaviourStage = 0;
     public Behavioural[] behaviourals;
     public new Rigidbody rigidbody;
     public MeshRenderer meshrenderer;
+    public AudioSource audioSource;
+    public Ball parent;
 
     // Start is called before the first frame update
     public void Start()
     {
+        this.meshrenderer = this.GetComponent<MeshRenderer>();
+        this.audioSource = this.GetComponent<AudioSource>();
+
+        //this.meshrenderer.enabled = false;
+
         BallPit.balls.Add(this);
-        //this.scale /= BallPit.scale;
-
-        this.behaviourals = new Behavioural[]{
-            new MemoryStack(this, BallPit.rand.Next(1, 64), BallPit.rand.Next(1, 8), 1),
-            new MemoryStack(this, BallPit.rand.Next(1, 4), BallPit.rand.Next(1, 16), 2),
-            //new SelfDigester(this, 0.00000000001f),
-            new Vocalizer(this, 16, 0.1f),
-            new Accelerometer(this, 10f),
-            new AgeKnower(this, 0.0001f),
-            new ChargeManipulator(this, 0.00001f),
-            new Colorizer(this, 0.0001f, 0.1f),
-            new FatigueKnower(this, 16),
-            new MassKnower(this, 1f),
-            new SelfSurgeon(this),
-            new SelfMutator(this, 16),
-            new TorqueEngine(this, 36000),
-            new Wiggler(this, 15000f, 2),
-            new Ears(this, 16, 100),
-            new FreeEnergy(this, 0.01f),
-            new EnergyExchange(this, 6, 1f)
-        };
-        this.behaviourals = Utils.ShuffleArray(this.behaviourals);
-
-        (int isize, int osize) = this.IOSize();
-
-        int hsizeMax = BallPit.rand.Next(2, 1024);
-        LayerGroup brainStructure = new Layer(isize) + Neurons.GenerateHiddenLayers(hsizeMax, BallPit.rand.Next(1, hsizeMax)) + new Layer(osize);
-
-        this.neurons = brainStructure.GenerateNeurons();
+        this.diameter = 1;
 
         this.rigidbody = this.GetComponent<Rigidbody>();
-        this.meshrenderer = this.GetComponent<MeshRenderer>();
         this.radius = this.transform.localScale[0];
+        
+        var dummy = AudioClip.Create ("dummy", 1, 1, AudioSettings.outputSampleRate, false);
+
+        dummy.SetData(new float[] { 1 }, 0);
+        this.audioSource.clip = dummy; //just to let unity play the audiosource
+        this.audioSource.loop = true;
+        this.audioSource.spatialBlend = 1;
+        this.audioSource.Play();
+    }
+
+    public void Init(Ball ball)
+    {
+        int count = ball.behaviourals.Length;
+        Behavioural[] behaviourals = new Behavioural[count];
+
+        for(int i = 0; i < count; i++)
+        {
+            behaviourals[i] = ball.behaviourals[i].Clone(this);
+        }
+
+        this.Init(behaviourals, ball.neurons.Clone());
+    }
+    public void Init()
+    {
+        int vocalChannels = 64;
+
+        Behavioural[] behaviourals = new Behavioural[]{
+            new GravityManipulator(this, Utils.GetRandomPositiveScalar(BallPit.rand)*5),
+            new MemoryStack(this, BallPit.rand.Next(1, 32), BallPit.rand.Next(1, 8), 1),
+            new MemoryStack(this, BallPit.rand.Next(1, 4), BallPit.rand.Next(1, 16), 4),
+            new NoiseGenerator(this, BallPit.rand.Next(0, 32)),
+            new SelfDigester(this, 1f/((float)BallPit.rand.Next(1, 10000000))),
+            new Vocalizer(this, BallPit.rand.Next(0, vocalChannels), Utils.GetRandomPositiveScalar(BallPit.rand)*5f),
+            new Accelerometer(this),
+            new AgeKnower(this),
+            new ChargeManipulator(this, BallPit.rand.Next(0, 6), 0.001f),
+            new Colorizer(this, 0.8f, 0.1f),
+            new FatigueKnower(this, 16),
+            new MassKnower(this),
+            new SelfSurgeon(this),
+            new SelfMutator(this, BallPit.rand.Next(0, 32)),
+            new TorqueEngine(this, 3600000f),
+            new Wiggler(this, Utils.GetRandomPositiveScalar(BallPit.rand)*300f),
+            new Ears(this, BallPit.rand.Next(0, vocalChannels), Utils.GetRandomPositiveScalar(BallPit.rand)*100),
+            new FreeEnergy(this, 1f),
+            //new EnergyExchange(this, BallPit.rand.Next(0, 32), 0.000000000000000001f/BallPit.rand.Next(1, Int32.MaxValue)),
+            new Splitter(this, Utils.GetRandomPositiveScalar(BallPit.rand)*10000000000f, 0.1f*Utils.GetRandomPositiveScalar(BallPit.rand))
+        };
+        
+        (int isize, int osize) = Ball.IOSize(behaviourals);
+
+        int hsizeMax = BallPit.rand.Next(0, 64);
+        LayerGroup hiddenLayers = hsizeMax == 0 ? new LayerGroup() : Neurons.GenerateHiddenLayers(hsizeMax, BallPit.rand.Next(1, hsizeMax));
+        LayerGroup brainStructure = new Layer(isize) + hiddenLayers + new Layer(osize);
+
+        this.Init(behaviourals, brainStructure.GenerateNeurons());
+    }
+
+    public void Init(Behavioural[] behaviourals, Neurons neurons)
+    {
+        this.behaviourals = behaviourals;
+        this.behaviourals = Utils.ShuffleArray(this.behaviourals);
+
+        this.neurons = neurons;
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        foreach (ContactPoint contact in collision.contacts)
+        {
+            GameObject go = contact.otherCollider.gameObject;
+            Ball other = go.GetComponent<Ball>();
+            if(other != null)
+            {
+                //DISTRIBUTE CHARGES
+                /*float chargeDensity = (this.charge + other.charge)/(this.mass + other.mass);
+                this.charge = chargeDensity*this.mass;
+                other.charge = chargeDensity*other.mass;*/
+
+                //EAT
+                if(other.radius < this.radius*0.8f)
+                {
+                    this.mass = this.mass + other.mass*0.99f;
+                    this.inertia += other.inertia*0.99f;
+                    this.momentum += other.momentum*0.99f;
+                    other.Kill("Eaten");
+                }
+            }
+            Debug.DrawRay(contact.point, contact.normal, Color.white);
+        }
     }
 
     // Update is called once per frame
@@ -64,15 +134,16 @@ public class Ball : MonoBehaviour
 
     public void FixedUpdate()
     {
-        if(this.transform.position.y < -10)
+        if(this.dead || this.transform.position.y < -50 || this.transform.position.magnitude > 1000)
         {
-            this.Kill();
+            BallPit.balls.Remove(this);
+            UnityEngine.Object.Destroy(this.gameObject);
         }
         else
         {
             if(neurons != null)
             {
-                this.neurons.UpdateNeurons(2);
+                this.neurons.UpdateNeurons(12);
                 this.UpdateBehaviour();
             }
 
@@ -80,14 +151,90 @@ public class Ball : MonoBehaviour
         }
     }
 
+    #region audio
+    public float[] voice = new float[0];
+    //private float[] voicePrev = new float[0];
+    private long audioTimeIndex = 0;
+
+    public void ResetAudioTimeIndex()
+    {
+        this.audioTimeIndex = 0;
+    }
+    private readonly int sampleRate = 32000;
+    void OnAudioFilterRead(float[] data, int channels)
+    {
+        int N = this.voice.Length;
+
+        if(N != 0)
+        {
+            /*if(N != voicePrev.Length)
+            {
+                voicePrev = this.voice;
+            }*/
+            float fundamental = BallPit.unitFrequency/this.diameter;
+            float interval = 2;
+
+            for(int i = 0, l = data.Length; i < l; i += channels)
+            {
+                float fade1 = (float)i/l;
+                float fade0 = 1f - fade1;
+
+                float x = 0f;
+                float f = fundamental;
+                for(int n = 0; n < N; n++)
+                {
+                    if(f >= 20 && f <= 16000)
+                    {
+                        float a = this.voice[n];//*fade1 + this.voicePrev[n]*fade0;
+                        x += a*Mathf.Sin(Utils.radian*i*f/sampleRate);
+                    }
+                    f *= interval;
+                }
+            
+                this.audioTimeIndex++;
+            
+                //if timeIndex gets too big, reset it to 0
+                if(this.audioTimeIndex >= Int32.MaxValue && x > -0.0001f && x < 0.0001f)
+                {
+                    this.audioTimeIndex = 0;
+                }
+
+                x *= BallPit.audioVolume;
+
+                for(int c = 0; c < channels; c++)
+                {
+                    data[i + c] = x;
+                }
+            }
+        }
+    }
+    #endregion
+
+    #region gameobjects
+        public Ball Duplicate()
+        {
+            GameObject go = BallPit.ballpit.NewBall();
+            if(go != null)
+            {
+                Ball ball = go.GetComponent<Ball>();
+                if(ball != null)
+                {
+                    ball.Init(this);
+                    return ball;
+                }
+            }
+            return null;
+        }
+    #endregion
+
     #region behaviourals
-        private (int, int) IOSize()
+        private static (int, int) IOSize(Behavioural[] behaviourals)
         {
             int isize = 0, osize = 0;
-            for(int i = 0, l = this.behaviourals.Length; i < l; i++)
+            for(int i = 0, l = behaviourals.Length; i < l; i++)
             {
-                isize += this.behaviourals[i].inputLayerNodes;
-                osize += this.behaviourals[i].outputLayerNodes;
+                isize += behaviourals[i].inputLayerNodes;
+                osize += behaviourals[i].outputLayerNodes;
             }
             return (Math.Max(1, isize), Math.Max(1, osize));
         }
@@ -107,7 +254,7 @@ public class Ball : MonoBehaviour
                 so += prev.outputLayerNodes;
             }
 
-            (int isize, int osize) = this.IOSize();
+            (int isize, int osize) = Ball.IOSize(this.behaviourals);
             Behavioural behavioural = behaviourals[index];
             if(!behavioural.UpdateNeurons(this.neurons, si, so - osize))
             {
@@ -121,15 +268,12 @@ public class Ball : MonoBehaviour
     #endregion
 
     #region life
+        private bool dead = false;
         public void Kill(string message)
         {
-            this.Kill();
-            throw new Exception(message);
-        }
-        public void Kill()
-        {
-            BallPit.balls.Remove(this);
-            UnityEngine.Object.Destroy(this.gameObject);
+            this.dead = true;
+            this.audioSource.Stop();
+            //Debug.Log(message);
         }
         public static HashSet<Ball> GetLiving()
         {
@@ -169,7 +313,7 @@ public class Ball : MonoBehaviour
                 float fatigue = this.fatigue - value;
                 if(fatigue < 0)
                 {
-                    this.mass -= fatigue/Utils.speedOfLightSquared;
+                    //this.mass += -fatigue/Utils.speedOfLightSquared;
                     fatigue = 0;
                 }
                 this.fatigue = fatigue;
@@ -186,7 +330,33 @@ public class Ball : MonoBehaviour
             }
             set
             {
+                if(value <= 0)
+                {
+                    this.Kill("Negative mass");
+                }
                 this.volume = value/this.density;
+            }
+        }
+        public Vector3 inertia
+        {
+            get
+            {
+                return this.rigidbody.inertiaTensor;
+            }
+            set
+            {
+                this.rigidbody.inertiaTensor = value;
+            }
+        }
+        public Vector3 momentum
+        {
+            get
+            {
+                return this.rigidbody.velocity*this.mass;
+            }
+            set
+            {
+                this.rigidbody.velocity = value/this.mass;
             }
         }
     #endregion
@@ -223,7 +393,7 @@ public class Ball : MonoBehaviour
             }
         #endregion
         #region sphere
-            public float _radius = 1f;
+            public float _radius;
             public float radius
             {
                 get
@@ -232,9 +402,14 @@ public class Ball : MonoBehaviour
                 }
                 set
                 {
+                    if(Single.IsNaN(value))
+                    {
+                        this.Kill("NaN radius");
+                        return;
+                    }
                     if(value < 0.001f)
                     {
-                        this.Kill();
+                        this.Kill("Too small radius");
                         return;
                     }
                     this._radius = value;
@@ -242,7 +417,7 @@ public class Ball : MonoBehaviour
                     Vector3 scale = this.scale;
                     if(Utils.IsNaN(scale))
                     {
-                        this.Kill();
+                        this.Kill("NaN scale");
                         return;
                     }
                     //UPDATE UNITY GAMEOBJECT
@@ -280,7 +455,16 @@ public class Ball : MonoBehaviour
                 }
                 set
                 {
-                    this.radius = Utils.Cbrt(value/Utils.spherePerCubeVolume);
+                    if(value <= 0)
+                    {
+                        this.Kill("Negative volume");
+                    }
+                    float r = Utils.Cbrt(value/Utils.spherePerCubeVolume);
+                    if(Single.IsNaN(r))
+                    {
+                        r = 0;
+                    }
+                    this.radius = r;
                 }
             }
             public float surfaceArea
@@ -294,7 +478,7 @@ public class Ball : MonoBehaviour
             {
                 get
                 {
-                    return Vector3.one*(this.radius*BallPit.scale);
+                    return Vector3.one*(this.diameter);
                 }
             }
         #endregion

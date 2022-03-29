@@ -1,5 +1,5 @@
 using System;
-public class Behavioural
+public abstract class Behavioural
 {
     public readonly int inputLayerNodes;
     public readonly int outputLayerNodes;
@@ -51,4 +51,6 @@ public class Behavioural
     {
         
     }
+
+    public abstract Behavioural Clone(Ball ball);
 }

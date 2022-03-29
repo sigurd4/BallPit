@@ -140,9 +140,11 @@ public class Neurons
                 switch(BallPit.rand.Next(0, 5))
                 {
                     case 0: g.Add(new Layer(size, Neurons.Lin)); break;
-                    case 4: g.Add(new Layer(size, Neurons.ReLU)); break;
+                    case 1: g.Add(new Layer(size, Neurons.ReLU)); break;
                     case 2: g.Add(new Layer(size, Neurons.Sigmoid)); break;
                     case 3: g.Add(new Layer(size, Neurons.Tanh)); break;
+                    case 4: g.Add(new Layer(size, Neurons.Modulus)); break;
+                    case 5: g.Add(new Layer(size, Neurons.Finite)); break;
                 }
             }
         }
@@ -150,5 +152,23 @@ public class Neurons
             return BallPit.rand.Next(0, 2)*2 - 1;
         });
         return g.ToArray();
+    }
+
+    public Neurons Clone()
+    {
+        Neuron[] neurons = new Neuron[this.count];
+        for(int i = 0; i < this.count; i++)
+        {
+            neurons[i] = new Neuron(this.neurons[i].bounding, this.neurons[i].value);
+        }
+        for(int i = 0; i < this.count; i++)
+        {
+            Dictionary<Neuron, float> c = this.neurons[i].connections;
+            foreach(Neuron n in c.Keys)
+            {
+                neurons[i].connections.Add(neurons[Array.IndexOf(this.neurons, n)], c[n]);
+            }
+        }
+        return new Neurons(neurons);
     }
 }

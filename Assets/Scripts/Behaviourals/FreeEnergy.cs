@@ -8,6 +8,11 @@ public class FreeEnergy : Behavioural
     }
     protected override void UpdateNeurons(float[] inputLayer, float[] outputLayer)
     {
-        this.ball.fatigue *= Mathf.Exp(-1000000*Time.deltaTime);
+        this.ball.fatigue *= Mathf.Exp(-this.regen*Time.deltaTime);
+    }
+    
+    public override Behavioural Clone(Ball ball)
+    {
+        return new FreeEnergy(ball, this.regen);
     }
 }

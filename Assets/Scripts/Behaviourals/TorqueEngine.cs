@@ -3,8 +3,7 @@ using System;
 public class TorqueEngine : Behavioural
 {
     private readonly float torque;
-
-    public TorqueEngine(Ball ball, float torque) : base(ball, 1, 4)
+    public TorqueEngine(Ball ball, float torque) : base(ball, 1, 5)
     {
         this.torque = torque;
     }
@@ -13,27 +12,36 @@ public class TorqueEngine : Behavioural
     {
         float fatigueCoefficient = this.ball.fatigueCoefficient;
 
-        float mass = this.ball.mass;
-
-        Vector3 torqueActuator = new Vector3(
-            Neurons.Tanh(outputLayer[0]),
-            Neurons.Tanh(outputLayer[1]),
-            Neurons.Tanh(outputLayer[2])
-        )*Neurons.ReLU(outputLayer[3]);
-
-        inputLayer[0] = torqueActuator.magnitude;
-
-        Vector3 torque = torqueActuator*(this.torque*fatigueCoefficient*mass*Time.deltaTime);
-
-        if(!Utils.IsFinite(torque))
+        if(fatigueCoefficient != 0f)
         {
-            return;
+            Vector3 torqueActuator = new Vector3(
+                Neurons.Tanh(outputLayer[0]),
+                Neurons.Tanh(outputLayer[1]),
+                Neurons.Tanh(outputLayer[2])
+            )*Neurons.ReLU(outputLayer[3]);
+
+            torqueActuator = torqueActuator.normalized*Mathf.Pow(torqueActuator.magnitude, Neurons.Sigmoid(outputLayer[4]));
+
+            inputLayer[0] = torqueActuator.magnitude;
+
+            Vector3 torque = torqueActuator*this.torque*this.ball.mass*fatigueCoefficient*Time.deltaTime;
+
+            if(!Utils.IsFinite(torque))
+            {
+                return;
+            }
+
+            this.ball.rigidbody.AddRelativeTorque(torque);
+
+            Vector3 inertia = this.ball.inertia;
+            Vector3 inertiaInv = inertia;
+
+            this.ball.AddFatigue(Vector3.Dot(torque, (Vector3.Cross(torque, inertia.normalized)/inertia.magnitude))*Time.deltaTime);
         }
-
-        this.ball.rigidbody.AddRelativeTorque(torque);
-
-        float inertia = this.ball.rigidbody.inertiaTensor.magnitude;
-
-        this.ball.AddFatigue(torque.magnitude*torque.magnitude/inertia*Time.deltaTime);
+    }
+    
+    public override Behavioural Clone(Ball ball)
+    {
+        return new TorqueEngine(ball, this.torque);
     }
 }

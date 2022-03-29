@@ -5,7 +5,7 @@ public class EnergyExchange : Behavioural
     private readonly int polySize;
     private readonly float charitability;
     
-    public EnergyExchange(Ball ball, int polySize, float charitability) : base(ball, 0, 1 + polySize)
+    public EnergyExchange(Ball ball, int polySize, float charitability) : base(ball, 0, 2 + polySize)
     {        
         this.polySize = polySize;
         this.charitability = charitability;
@@ -14,53 +14,61 @@ public class EnergyExchange : Behavioural
     {
         float fatigueCoefficient = this.ball.fatigueCoefficient;
 
-        float energy = this.charitability*(1 - Mathf.Exp(-Time.deltaTime*Neurons.Sigmoid(outputLayer[0])))*fatigueCoefficient*this.ball.energy;
-        
-        if(energy != 0)
+        if(fatigueCoefficient != 1f)
         {
-            HashSet<Ball> balls = Ball.GetLiving();
-            if(balls.Count != 1)
+            float energy = (1 - Mathf.Exp(-Mathf.Pow(this.charitability*Time.deltaTime*Neurons.Sigmoid(outputLayer[0]), Neurons.Sigmoid(outputLayer[1]))))*fatigueCoefficient*this.ball.energy;
+            
+            if(energy != 0)
             {
-                float radius = this.ball.radius;
-                
-                Vector3 force = Vector3.zero;
-
-                float totalStake = 0;
-                Dictionary<Ball, float> stake = new Dictionary<Ball, float>();
-
-                foreach(Ball other in balls)
+                HashSet<Ball> balls = Ball.GetLiving();
+                if(balls.Count != 1)
                 {
-                    if(other == null || other == this.ball) continue;
-                    Vector3 R = other.transform.position - this.ball.transform.position;
+                    float radius = this.ball.radius;
+                    
+                    Vector3 force = Vector3.zero;
 
-                    float r = R.magnitude - other.radius - radius;
-                    r += Mathf.Sign(r)*0.01f;
+                    float totalStake = 0;
+                    Dictionary<Ball, float> stake = new Dictionary<Ball, float>();
 
-                    stake.Add(other, 0.0f);
-                    for(int i = 0; i < this.polySize; i++)
-                    {
-                        float coeff = Neurons.Tanh(outputLayer[1 + i]);
-                        for(int j = 0; j <= i; j++)
-                        {
-                            coeff /= r;
-                        }
-                        stake[other] += coeff;
-                    }
-                    stake[other] = Mathf.Abs(stake[other])*other.fatigue;
-                    totalStake += stake[other];
-                }
-                if(totalStake != 0)
-                {
                     foreach(Ball other in balls)
                     {
                         if(other == null || other == this.ball) continue;
-                        float e = energy*(stake[other]/(totalStake + 0.0001f));
-                        e = Mathf.Min(e, other.fatigue);
-                        this.ball.AddFatigue(e);
-                        other.energy += e;
+                        Vector3 R = other.transform.position - this.ball.transform.position;
+
+                        float r = R.magnitude - other.radius - radius;
+                        r += Mathf.Sign(r)*0.01f;
+
+                        stake.Add(other, 0.0f);
+                        for(int i = 0; i < this.polySize; i++)
+                        {
+                            float coeff = Neurons.Tanh(outputLayer[2 + i]);
+                            for(int j = 0; j <= i; j++)
+                            {
+                                coeff /= r;
+                            }
+                            stake[other] += coeff/(this.polySize - i);
+                        }
+                        stake[other] = Mathf.Abs(stake[other])*other.fatigue;
+                        totalStake += stake[other];
+                    }
+                    if(totalStake != 0)
+                    {
+                        foreach(Ball other in balls)
+                        {
+                            if(other == null || other == this.ball) continue;
+                            float e = energy*(stake[other]/(totalStake + 0.0001f));
+                            e = Mathf.Min(e, other.fatigue);
+                            this.ball.AddFatigue(e);
+                            other.energy += e;
+                        }
                     }
                 }
             }
         }
+    }
+    
+    public override Behavioural Clone(Ball ball)
+    {
+        return new EnergyExchange(ball, this.polySize, this.charitability);
     }
 }

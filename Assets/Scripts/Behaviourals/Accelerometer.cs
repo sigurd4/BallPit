@@ -4,12 +4,10 @@ public class Accelerometer : Behavioural
 {
     private Vector3 lastVelocity;
     private Vector3 lastAngularVelocity;
-    private readonly float scale;
-    public Accelerometer(Ball ball, float scale) : base(ball, 20, 9)
+    public Accelerometer(Ball ball) : base(ball, 21, 18)
     {        
         this.lastVelocity = Vector3.zero;
         this.lastAngularVelocity = Vector3.zero;
-        this.scale = scale;
     }
 
     protected override void UpdateNeurons(float[] inputLayer, float[] outputLayer)
@@ -19,36 +17,54 @@ public class Accelerometer : Behavioural
         Vector3 sampleDir3 = new Vector3(Neurons.Lin(outputLayer[6]), Neurons.Lin(outputLayer[7]), Neurons.Lin(outputLayer[8]));
 
         Vector3 velocity = Quaternion.Inverse(this.ball.transform.rotation)*this.ball.GetComponent<Rigidbody>().velocity;
-        Vector3 acceleration = (velocity - this.lastVelocity)/Time.deltaTime*this.scale;
+        Vector3 acceleration = (velocity - this.lastVelocity)/Time.deltaTime;
         this.lastVelocity = velocity;
 
-        inputLayer[0] = Neurons.Tanh(acceleration.x);
-        inputLayer[1] = Neurons.Tanh(acceleration.y);
-        inputLayer[2] = Neurons.Tanh(acceleration.z);
-        inputLayer[3] = Neurons.Tanh(acceleration.sqrMagnitude);
-        inputLayer[4] = Neurons.Tanh(Vector3.Dot(acceleration, sampleDir1));
-        inputLayer[5] = Neurons.Tanh(Vector3.Dot(acceleration, sampleDir2));
-        inputLayer[6] = Neurons.Tanh(Vector3.Dot(acceleration, sampleDir3));
+        float dist1 = Neurons.Sigmoid(outputLayer[9]);
+        float dist2 = Neurons.Sigmoid(outputLayer[10]);
+        float dist3 = Neurons.Sigmoid(outputLayer[11]);
+
+        inputLayer[0] = Neurons.Tanh(Mathf.Pow(acceleration.x, dist1));
+        inputLayer[1] = Neurons.Tanh(Mathf.Pow(acceleration.y, dist1));
+        inputLayer[2] = Neurons.Tanh(Mathf.Pow(acceleration.z, dist1));
+        inputLayer[3] = Neurons.Tanh(Mathf.Pow(acceleration.sqrMagnitude, dist2));
+        inputLayer[4] = Neurons.Tanh(Mathf.Pow(Vector3.Dot(acceleration, sampleDir1), dist3));
+        inputLayer[5] = Neurons.Tanh(Mathf.Pow(Vector3.Dot(acceleration, sampleDir2), dist3));
+        inputLayer[6] = Neurons.Tanh(Mathf.Pow(Vector3.Dot(acceleration, sampleDir3), dist3));
 
         Vector3 accelerationAngle = new Vector3(Vector3.Angle(acceleration, Vector3.up), Vector3.Angle(acceleration, Vector3.right), Vector3.Angle(acceleration, Vector3.forward))/180f;
 
-        inputLayer[7] = Neurons.Tanh(accelerationAngle.x);
-        inputLayer[8] = Neurons.Tanh(accelerationAngle.y);
-        inputLayer[9] = Neurons.Tanh(accelerationAngle.z);
-        inputLayer[10] = Neurons.Tanh(Vector3.Dot(accelerationAngle, sampleDir1));
-        inputLayer[11] = Neurons.Tanh(Vector3.Dot(accelerationAngle, sampleDir2));
-        inputLayer[12] = Neurons.Tanh(Vector3.Dot(accelerationAngle, sampleDir3));
+        float dist4 = Neurons.Sigmoid(outputLayer[12]);
+        float dist5 = Neurons.Sigmoid(outputLayer[13]);
+        float dist6 = Neurons.Sigmoid(outputLayer[14]);
+
+        inputLayer[7] = Neurons.Tanh(Mathf.Pow(accelerationAngle.x, dist4));
+        inputLayer[8] = Neurons.Tanh(Mathf.Pow(accelerationAngle.y, dist4));
+        inputLayer[9] = Neurons.Tanh(Mathf.Pow(accelerationAngle.z, dist4));
+        inputLayer[10] = Neurons.Tanh(Mathf.Pow(accelerationAngle.sqrMagnitude, dist5));
+        inputLayer[11] = Neurons.Tanh(Mathf.Pow(Vector3.Dot(accelerationAngle, sampleDir1), dist6));
+        inputLayer[12] = Neurons.Tanh(Mathf.Pow(Vector3.Dot(accelerationAngle, sampleDir2), dist6));
+        inputLayer[13] = Neurons.Tanh(Mathf.Pow(Vector3.Dot(accelerationAngle, sampleDir3), dist6));
 
         Vector3 angularVelocity = this.ball.GetComponent<Rigidbody>().angularVelocity;
-        Vector3 angularAcceleration = (angularVelocity - this.lastAngularVelocity)/Time.deltaTime*this.scale;
+        Vector3 angularAcceleration = (angularVelocity - this.lastAngularVelocity)/Time.deltaTime;
         this.lastAngularVelocity = angularVelocity;
 
-        inputLayer[13] = Neurons.Tanh(angularAcceleration.x);
-        inputLayer[14] = Neurons.Tanh(angularAcceleration.y);
-        inputLayer[15] = Neurons.Tanh(angularAcceleration.z);
-        inputLayer[16] = Neurons.Tanh(angularAcceleration.sqrMagnitude);
-        inputLayer[17] = Neurons.Tanh(Vector3.Dot(angularAcceleration, sampleDir1));
-        inputLayer[18] = Neurons.Tanh(Vector3.Dot(angularAcceleration, sampleDir2));
-        inputLayer[19] = Neurons.Tanh(Vector3.Dot(angularAcceleration, sampleDir3));
+        float dist7 = Neurons.Sigmoid(outputLayer[15]);
+        float dist8 = Neurons.Sigmoid(outputLayer[16]);
+        float dist9 = Neurons.Sigmoid(outputLayer[17]);
+
+        inputLayer[14] = Neurons.Tanh(Mathf.Pow(angularAcceleration.x, dist7));
+        inputLayer[15] = Neurons.Tanh(Mathf.Pow(angularAcceleration.y, dist7));
+        inputLayer[16] = Neurons.Tanh(Mathf.Pow(angularAcceleration.z, dist7));
+        inputLayer[17] = Neurons.Tanh(Mathf.Pow(angularAcceleration.sqrMagnitude, dist8));
+        inputLayer[18] = Neurons.Tanh(Mathf.Pow(Vector3.Dot(angularAcceleration, sampleDir1), dist9));
+        inputLayer[19] = Neurons.Tanh(Mathf.Pow(Vector3.Dot(angularAcceleration, sampleDir2), dist9));
+        inputLayer[20] = Neurons.Tanh(Mathf.Pow(Vector3.Dot(angularAcceleration, sampleDir3), dist9));
+    }
+
+    public override Behavioural Clone(Ball ball)
+    {
+        return new Accelerometer(ball);
     }
 }

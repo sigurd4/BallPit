@@ -14,11 +14,12 @@ public class Colorizer : Behavioural
     {
         float fatigueCoefficient = Mathf.Pow(this.ball.fatigueCoefficient, this.fatigueCurve);
         //CONTROL COLOR:
-        Vector3 c = new Vector3(
-            fatigueCoefficient*(0.5f + Neurons.Tanh(outputLayer[0])*0.5f),
-            fatigueCoefficient*(0.5f + Neurons.Tanh(outputLayer[1])*0.5f),
-            fatigueCoefficient*(0.5f + Neurons.Tanh(outputLayer[2])*0.5f)
+        Vector3 c = fatigueCoefficient == 0 ? Vector3.zero : fatigueCoefficient*new Vector3(
+            Neurons.Sigmoid(outputLayer[0]),
+            Neurons.Sigmoid(outputLayer[1]),
+            Neurons.Sigmoid(outputLayer[2])
         );
+        this.ball.meshrenderer.enabled = true;
 
         if(this.color == null)
         {
@@ -32,5 +33,11 @@ public class Colorizer : Behavioural
 
         Color color = new Color(c[0], c[1], c[2]);
         this.ball.meshrenderer.material.color = color;
+    }
+    
+    public override Behavioural Clone(Ball ball)
+    {
+        ball.meshrenderer.material.color = this.ball.meshrenderer.material.color;
+        return new Colorizer(ball, this.fatigueCurve, this.responsiveness);
     }
 }

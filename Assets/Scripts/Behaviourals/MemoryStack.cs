@@ -20,6 +20,11 @@ public class MemoryStack : Behavioural
         this.GenerateStacks();
         this.GeneratePickOrder();
     }
+    
+    public override Behavioural Clone(Ball ball)
+    {
+        return new MemoryStack(ball, this.length, this.blocksize, this.speed);
+    }
 
     private int[] GetRandomIndexes()
     {
@@ -55,7 +60,7 @@ public class MemoryStack : Behavioural
         //Fill stack
         for(int i = 0; i < this.length; i++)
         {
-            this.stack[n].Push(Utils.GetRandomMultiplier(MemoryStack.rand));
+            this.stack[n].Push(Utils.GetRandomPositiveScalar(MemoryStack.rand));
         }
     }
     protected override void UpdateNeurons(float[] inputLayer, float[] outputLayer)

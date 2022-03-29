@@ -1,14 +1,18 @@
 using UnityEngine;
 public class AgeKnower : Behavioural
 {
-    private readonly float timescale;
-    public AgeKnower(Ball ball, float timescale) : base(ball, 1, 0)
+    public AgeKnower(Ball ball) : base(ball, 1, 1)
     {
-        this.timescale = timescale;
+
     }
 
     protected override void UpdateNeurons(float[] inputLayer, float[] outputLayer)
     {
-        inputLayer[0] = 1 - Mathf.Exp(-this.ball.age*this.timescale);
+        inputLayer[0] = 1 - Mathf.Exp(-Mathf.Pow(this.ball.age, Neurons.Sigmoid(outputLayer[0])));
+    }
+    
+    public override Behavioural Clone(Ball ball)
+    {
+        return new AgeKnower(ball);
     }
 }

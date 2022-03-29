@@ -1,15 +1,19 @@
 using UnityEngine;
 public class MassKnower : Behavioural
 {
-    private readonly float scale;
-    public MassKnower(Ball ball, float scale) : base(ball, 2, 0)
+    public MassKnower(Ball ball) : base(ball, 2, 2)
     {
-        this.scale = scale;
+
     }
 
     protected override void UpdateNeurons(float[] inputLayer, float[] outputLayer)
     {
-        inputLayer[0] = Neurons.Tanh(this.ball.mass);
-        inputLayer[1] = Neurons.Tanh(this.ball.density);
+        inputLayer[0] = Neurons.Tanh(Mathf.Pow(this.ball.mass, Neurons.Tanh(outputLayer[0])));
+        inputLayer[1] = Neurons.Tanh(Mathf.Pow(this.ball.density, Neurons.Tanh(outputLayer[1])));
+    }
+    
+    public override Behavioural Clone(Ball ball)
+    {
+        return new MassKnower(ball);
     }
 }
