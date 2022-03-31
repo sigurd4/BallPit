@@ -68,10 +68,10 @@ public class Splitter : Behavioural
                                 this.ball.position = this.ball.position + pos1;
                                 child.position = this.ball.position + pos2;
                                 
-                                Vector3 force = (pos2 - pos1).normalized*forceMagnitude;
+                                /*Vector3 force = (pos2 - pos1).normalized*forceMagnitude;
                                 this.ball.rigidbody.AddForce(-force);
                                 child.rigidbody.AddForce(force);
-                                this.ball.AddFatigue(forceMagnitude*forceMagnitude/mass*Time.timeScale);
+                                this.ball.AddFatigue(forceMagnitude*forceMagnitude/mass*Time.timeScale);*/
                             }
                         }
                     }

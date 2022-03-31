@@ -37,7 +37,7 @@ public class Ball : MonoBehaviour
         
         var dummy = AudioClip.Create ("dummy", 1, 1, AudioSettings.outputSampleRate, false);
 
-        dummy.SetData(new float[] { 1 }, 0);
+        dummy.SetData(new float[] { 0 }, 0);
         this.audioSource.clip = dummy; //just to let unity play the audiosource
         this.audioSource.loop = true;
         this.audioSource.spatialBlend = 1;
@@ -58,7 +58,7 @@ public class Ball : MonoBehaviour
     }
     public void Init()
     {
-        int vocalChannels = 64;
+        int vocalChannels = 8;
 
         Behavioural[] behaviourals = new Behavioural[]{
             new GravityManipulator(this, Utils.GetRandomPositiveScalar(BallPit.rand)*5),
@@ -69,7 +69,7 @@ public class Ball : MonoBehaviour
             new Vocalizer(this, BallPit.rand.Next(0, vocalChannels), Utils.GetRandomPositiveScalar(BallPit.rand)*5f),
             new Accelerometer(this),
             new AgeKnower(this),
-            new ChargeManipulator(this, BallPit.rand.Next(0, 6), 0.001f),
+            new ChargeManipulator(this, BallPit.rand.Next(0, 12), 0.0001f),
             new Colorizer(this, 0.8f, 0.1f),
             new FatigueKnower(this, 16),
             new MassKnower(this),
@@ -154,7 +154,7 @@ public class Ball : MonoBehaviour
     #region audio
     public float[] voice = new float[0];
     //private float[] voicePrev = new float[0];
-    private long audioTimeIndex = 0;
+    private ulong audioTimeIndex = 0;
 
     public void ResetAudioTimeIndex()
     {
@@ -172,7 +172,8 @@ public class Ball : MonoBehaviour
                 voicePrev = this.voice;
             }*/
             float fundamental = BallPit.unitFrequency/this.diameter;
-            float interval = 2;
+            float interval = 2f;
+            uint cycleLength = (uint)(1000*this.sampleRate/fundamental);
 
             for(int i = 0, l = data.Length; i < l; i += channels)
             {
@@ -194,7 +195,7 @@ public class Ball : MonoBehaviour
                 this.audioTimeIndex++;
             
                 //if timeIndex gets too big, reset it to 0
-                if(this.audioTimeIndex >= Int32.MaxValue && x > -0.0001f && x < 0.0001f)
+                if((uint)this.audioTimeIndex == cycleLength)
                 {
                     this.audioTimeIndex = 0;
                 }
@@ -272,7 +273,10 @@ public class Ball : MonoBehaviour
         public void Kill(string message)
         {
             this.dead = true;
-            this.audioSource.Stop();
+            if(this.audioSource != null)
+            {
+                this.audioSource.Stop();
+            }
             //Debug.Log(message);
         }
         public static HashSet<Ball> GetLiving()

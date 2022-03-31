@@ -28,7 +28,7 @@ public class Vocalizer : Behavioural
                 float P = 0;
                 for(int i = 0; i < this.voiceComplexity; i++)
                 {
-                    float a = Neurons.Tanh(outputLayer[i + 1])*m;
+                    float a = Neurons.Tanh(outputLayer[i + 1])*m/(i + 1);
                     
                     this.ball.voice[i] = a - this.ball.voice[i];
                     if(Single.IsNaN(this.ball.voice[i]))

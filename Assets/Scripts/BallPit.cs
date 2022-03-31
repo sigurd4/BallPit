@@ -6,7 +6,7 @@ using System;
 
 public class BallPit : MonoBehaviour
 {
-    public static readonly float unitFrequency = 880f;
+    public static readonly float unitFrequency = 220f;
     public static readonly float audioVolume = 0.1f;
     public static readonly HashSet<Ball> balls = new HashSet<Ball>();
     public static readonly System.Random rand = new System.Random(DateTime.Now.Millisecond);
